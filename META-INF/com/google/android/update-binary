@@ -1,0 +1,6 @@
+#!/sbin/sh
+SKIPUNZIP=1
+. /data/adb/magisk/util_functions.sh
+. /data/adb/ksu/util_functions.sh 2>/dev/null
+install_module
+exit 0

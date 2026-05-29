@@ -1,0 +1,344 @@
+# =============================================================================
+# MTK EXTREME BANDWIDTH MOD v1.0
+# Universal — All MediaTek Devices (Helio / Dimensity / MT-series)
+# Focus: Network / WiFi / Mobile Data / NR/5G / VoLTE
+# =============================================================================
+
+# =============================================================================
+# 1. LTE CARRIER AGGREGATION & RIL AGGRESSION
+# =============================================================================
+persist.data.lte.ca=1
+persist.radio.lte_ca_enabled=1
+persist.radio.lte_vrte_ltd=1
+persist.vendor.radio.force_lte_ca=true
+persist.vendor.network.lte_ca_enhanced=1
+persist.vendor.radio.lte.lteca.cap=2
+persist.vendor.radio.lte_ul_ca=1
+persist.vendor.radio.lte_dl_ca=1
+persist.vendor.radio.lte_dl_carrier=3
+persist.vendor.radio.lte_ul_carrier=2
+ro.ril.enable.amr.wideband=1
+ro.ril.enable.dtm=1
+ro.telephony.call_ring.multiple=false
+persist.radio.data_pref_always=1
+persist.radio.calls.on.ims=1
+persist.radio.data_no_toggle=1
+
+# =============================================================================
+# 2. MTK BASEBAND & RIL OPTIMIZATION
+# =============================================================================
+persist.vendor.radio.force_on_dc=true
+persist.vendor.radio.mtk_dsbp_support=1
+persist.vendor.radio.mtk_ps_rout_fail=false
+persist.vendor.radio.data_con_rgs=1
+persist.vendor.radio.sib16.support=1
+persist.vendor.radio.smart.data.switch=1
+persist.vendor.radio.data_ltd_sys_ind=1
+persist.vendor.radio.ap_mdm_sync=1
+persist.vendor.radio.sim.hotswap=1
+persist.vendor.radio.port_mode=0
+persist.vendor.radio.fd.on.only.screen=0
+ro.vendor.net.upload_optimization=1
+ro.ril.hsupa.category=6
+ro.ril.hsxpa=5
+ro.ril.hsdpa.category=24
+ro.ril.hep=1
+ro.ril.enable.a52=1
+ro.ril.enable.a53=1
+
+# =============================================================================
+# 3. FAST DORMANCY DISABLED (Lower Latency / Ping)
+# =============================================================================
+persist.env.fastdorm.enabled=false
+ro.ril.fast.dormancy.rule=0
+persist.vendor.radio.fd.disable=1
+persist.radio.data_no_toggle=1
+
+# =============================================================================
+# 4. WIFI — POWER SAVE OFF + BAND AGGREGATION + WiFi 6/6E
+# =============================================================================
+# Power save off
+ro.vendor.wifi.power_save=false
+persist.sys.wifi.power_save=false
+persist.vendor.mediatek.wifi.power_save=false
+persist.vendor.wifi.dynamic_con_control=0
+wifi.ps.mode=0
+persist.wifi.powersave=0
+
+# Band aggregation & steering
+persist.vendor.wifi.band_steering=1
+persist.vendor.wifi.dual_band=1
+ro.vendor.mtk.wifi.default_band=0
+persist.mtk.wifi.band.aggregation=1
+persist.mtk.wcn.wifi.5g.enabled=1
+persist.mtk.wcn.wifi.band=3
+wifi.mtk.aggregation.bands=2g_5g
+wifi.concurrent.bandswitch.enabled=1
+wifi.band.aggregation.enabled=1
+wifi.dual.band.enabled=1
+wifi.5ghz.preferred=1
+wifi.bgscan.enabled=1
+wifi.scan.interval.ms=15000
+wifi.supplicant_scan_interval=300
+wifi.sta.connected.mac.randomization.enabled=0
+
+# 802.11ac/ax/be features
+ro.vendor.wifi.enhanced_features=1
+persist.vendor.wifi.vht80.enable=true
+persist.vendor.wifi.vht160.enable=true
+ro.vendor.mtk_wifi_fast_bss_transition=1
+persist.wifi.11ax.enabled=1
+persist.wifi.he.enabled=1
+persist.wifi.mbo.enabled=1
+persist.wifi.oce.enabled=1
+persist.wifi.sae.enabled=1
+persist.wifi.twt.enabled=1
+persist.wifi.11be.enabled=1
+persist.vendor.wifi.p2p.coex.enable=0
+
+# Roaming aggressiveness
+persist.vendor.wifi.roaming_trigger=-75
+persist.vendor.wifi.roaming_diff=10
+persist.vendor.wifi.roaming_scanperiod=10
+persist.vendor.wifi.scan_disable_when_screen_off=1
+
+# Hotspot / SoftAP
+wifi.interface.softap.config=wlan0
+wifi.softap.interface=wlan0
+persist.vendor.wifi.softap.band=0
+persist.vendor.wifi.ap.bridge_mode=0
+persist.vendor.wifi.softap.sae=0
+ro.vendor.wifi.softap.enable=1
+persist.vendor.wifi.softap.max_num_sta=10
+
+# =============================================================================
+# 5. TCP BUFFER SIZES
+# =============================================================================
+ro.ril.tcp_rmem=1048576,4194304,16777216
+ro.ril.tcp_wmem=1048576,4194304,16777216
+net.tcp.buffersize.default=1048576,4194304,16777216,1048576,4194304,16777216
+net.tcp.buffersize.wifi=2097152,8388608,33554432,2097152,8388608,33554432
+net.tcp.buffersize.lte=2097152,8388608,16777216,2097152,8388608,16777216
+net.tcp.buffersize.nr=4194304,16777216,67108864,4194304,16777216,67108864
+net.tcp.buffersize.umts=1048576,4194304,16777216,1048576,4194304,16777216
+net.tcp.buffersize.hspa=1048576,4194304,16777216,1048576,4194304,16777216
+net.tcp.buffersize.hspap=1048576,4194304,16777216,1048576,4194304,16777216
+net.tcp.buffersize.edge=4096,16384,35040,4096,16384,35040
+net.tcp.buffersize.gprs=4096,8760,11680,4096,8760,11680
+net.tcp.buffersize.evdo=4096,16384,35040,4096,16384,35040
+net.core.wmem_max=4194304
+net.core.rmem_max=4194304
+
+# =============================================================================
+# 6. HARDWARE OFFLOADING & NETWORK LOGGING OFF
+# =============================================================================
+ro.vendor.net.enable_hardware_gro=1
+persist.vendor.mtk.wcn.coredump.mode=0
+persist.vendor.connsys.coredump.mode=0
+persist.vendor.sys.wifi.log=0
+persist.vendor.sys.bt.log=0
+persist.vendor.log.tel_log_ctrl=0
+persist.vendor.mtk.modem.log=0
+persist.vendor.radio.log.disable=1
+persist.vendor.connsys.dynamic.dump=0
+
+# =============================================================================
+# 7. DNS (Cloudflare 1.1.1.1)
+# =============================================================================
+net.dns1=1.1.1.1
+net.dns2=1.0.0.1
+net.rmnet0.dns1=1.1.1.1
+net.rmnet0.dns2=1.0.0.1
+net.rmnet1.dns1=1.1.1.1
+net.rmnet1.dns2=1.0.0.1
+
+# =============================================================================
+# 8. NETWORK HINTS & QOS
+# =============================================================================
+persist.data.iwlan.enable=true
+persist.data.netmgrd.qos.enable=true
+persist.sys.wifi.scan.always=false
+persist.connectivity.qos_enabled=1
+persist.data.qos.enabled=1
+persist.sys.radio.power.saving=0
+persist.sys.network.prefer.high_bw=1
+ro.vendor.use_data_netmgrd=true
+
+# =============================================================================
+# 9. NR / 5G FORCE ENABLE (SA + NSA, all global bands)
+# =============================================================================
+persist.vendor.radio.nr.enabled=1
+persist.vendor.radio.force_nr=true
+persist.vendor.radio.nr_mode=1
+persist.vendor.radio.mtk_nr_support=1
+persist.radio.nr.switch=1
+persist.vendor.radio.nr_sa_mode=1
+persist.vendor.radio.nr_nsa_mode=1
+ro.telephony.default_network=26
+persist.vendor.radio.network.mode=26
+persist.vendor.radio.rat_wcdma_prio=0
+persist.vendor.radio.mtk_nr_slot_policy=1
+persist.vendor.radio.5g_mode_pref=0
+ro.vendor.mtk_nr_capable=1
+ro.vendor.mtk_nr_support=1
+
+# =============================================================================
+# 10. MTK UNIVERSAL — CONNSYS / RADIO STACK / IMS / DSDS
+# =============================================================================
+
+# ConnSys — chipid auto-detected at runtime
+persist.vendor.connsys.chipid=-1
+persist.vendor.connsys.adie.chipid=-1
+persist.vendor.connsys.coredump.mode=0
+persist.vendor.connsys.dynamic.dump=0
+
+# MTK radio stack — universal multi-RAT config
+persist.vendor.radio.mtk_ps1_rat=C/L/W/G
+persist.vendor.radio.mtk_ps2_rat=L/G
+persist.vendor.radio.mtk_ps3_rat=G
+persist.vendor.radio.sim_switch_policy=2
+persist.vendor.radio.c2k_wsh=0
+persist.vendor.radio.mtk_ecc_list=0
+persist.vendor.radio.dsda_switch=0
+persist.vendor.radio.esim_support=0
+persist.radio.multisim.config=dsds
+
+# IMS / VoLTE / VoNR / WFC / ViLTE full stack
+persist.vendor.ims_support=1
+persist.vendor.mtk_ims_support=1
+persist.vendor.volte_support=1
+persist.vendor.mtk_volte_support=1
+persist.vendor.wfc_support=1
+persist.vendor.mtk_wfc_support=1
+persist.vendor.vilte_support=1
+persist.vendor.viwifi_support=1
+persist.vendor.mtk_ct_volte_support=1
+persist.vendor.ims.disable_si=0
+persist.vendor.radio.mtk_ims_ra_support=1
+persist.vendor.radio.mtk_ps_rout_fail=false
+
+# =============================================================================
+# 11. LTE ADVANCED + NR/5G EXTENDED (EN-DC / MIMO / 256QAM)
+# =============================================================================
+
+# LTE Advanced
+persist.vendor.radio.lte_band=1,2,3,4,5,7,8,12,13,17,18,19,20,25,26,28,29,30,38,39,40,41,66
+persist.vendor.radio.lte_ca_band_combo=1,3,5,7,8,28,40,41
+persist.vendor.radio.lte_mimo_mode=2
+persist.vendor.radio.lte_256qam=1
+persist.vendor.radio.lte_64qam=1
+persist.vendor.radio.lte_cqi_boost=1
+persist.vendor.radio.lte_rlc_mode=1
+persist.vendor.radio.lte_link_adaptation=1
+persist.vendor.radio.lte_max_dl_speed=600
+persist.vendor.radio.lte_harq=1
+persist.vendor.radio.lte_cco_enable=1
+persist.vendor.radio.lte_mtu=1500
+
+# NR/5G
+persist.vendor.radio.nr_band=1,2,3,5,7,8,20,25,28,38,40,41,66,71,77,78,79
+persist.vendor.radio.nr_nsa_band=1,3,5,7,8,28,40,41,77,78,79
+persist.vendor.radio.nr_sa_band=1,3,5,7,28,40,41,77,78,79
+persist.vendor.radio.nr_dl_nr_ul_ca=1
+persist.vendor.radio.nr_ul_mimo=1
+persist.vendor.radio.nr_256qam=1
+persist.vendor.radio.nr_cqi_boost=1
+persist.vendor.radio.nr_max_dl_speed=2000
+persist.vendor.radio.nr_harq=1
+persist.vendor.radio.nr_pdcp_rohc=1
+persist.vendor.radio.nr_bwp_inactivity_timer=2560
+persist.vendor.radio.nr_ssb_periodicity=20
+persist.vendor.radio.nr_beam_management=1
+persist.vendor.radio.nr_paging_drx=256
+persist.vendor.radio.nr_cdrx_enable=1
+persist.vendor.radio.nr_srs_switching=1
+persist.vendor.radio.nr_mtu=1500
+persist.vendor.radio.nr_switch_threshold=-110
+persist.vendor.radio.lte_nr_threshold_rsrp=-105
+persist.vendor.radio.enhanced_ca_support=1
+
+# EN-DC (LTE + NR Dual Connectivity)
+persist.vendor.radio.endc_enabled=1
+persist.vendor.radio.nr_endc_support=1
+persist.vendor.radio.lte_nr_dc_band=1,3,5,7,8,28,40,41
+persist.vendor.radio.mtk_endc_support=1
+persist.vendor.radio.endc_ul_sharing=1
+
+# =============================================================================
+# 12. VoLTE / VoNR (HD Voice + 5G Calling)
+# =============================================================================
+persist.vendor.radio.volte_enabled=1
+persist.vendor.radio.vonr_enabled=1
+persist.vendor.radio.vonr_setting_enabled=1
+ro.vendor.ims.disableADBLogs=1
+ro.vendor.ims.disableIMSLogs=1
+persist.dbg.volte_avail_ovr=1
+persist.dbg.wfc_avail_ovr=1
+persist.dbg.ims_volte_enable=1
+
+# =============================================================================
+# 13. NETWORK CONNECTIVITY & DATA STALL RECOVERY
+# =============================================================================
+# Reduce time to detect data stall and recover faster
+persist.data.stall.recovery.action=2
+persist.sys.nw.stall.threshold=500
+persist.sys.nw.stall.timeout=5000
+
+# Aggressive network re-evaluation
+persist.vendor.radio.network.re_evaluate=1
+persist.vendor.data.iwlan.ims.preferred=1
+persist.vendor.data.mode=10
+
+# Connectivity validation & keep-alive
+persist.vendor.radio.keepalive=1
+persist.vendor.radio.data_keepalive=1
+persist.radio.noril_offreason_prefix=true
+persist.vendor.radio.network.always_connected=1
+persist.vendor.radio.psm.disabled=1
+
+# PDCP layer (packet data convergence — reduces re-ordering delay)
+persist.vendor.radio.pdcp_reorder_timer=15
+persist.vendor.radio.pdcp_ul_agg_count=8
+persist.vendor.radio.pdcp_ul_agg_bytes=9000
+
+# RLC aggregation (Radio Link Control — larger aggregated PDUs)
+persist.vendor.radio.rlc_agg_enable=1
+persist.vendor.radio.rlc_ul_pdu_size=9000
+persist.vendor.radio.rlc_dl_pdu_size=9000
+
+# RRC connection management (faster re-establishment)
+persist.vendor.radio.rrc_release_timer=0
+persist.vendor.radio.rrc_connect_timeout=3000
+
+# =============================================================================
+# 14. MOBILE DATA NETWORK OPTIMIZATION
+# =============================================================================
+# MTU for data interfaces
+persist.vendor.radio.data_mtu=1500
+persist.vendor.radio.ims_mtu=1500
+persist.vendor.radio.default_data_sub=0
+
+# Data roaming & switching
+persist.vendor.radio.data_roaming=0
+persist.vendor.radio.always_allow_mms=1
+persist.vendor.radio.data_prefer_slot=0
+
+# APNs & data profile
+persist.vendor.radio.data_profile_update=1
+persist.vendor.radio.multi_ims_support=1
+
+# Downlink aggregation (maximize packet batching at modem)
+persist.vendor.radio.dl_batch_enable=1
+persist.vendor.radio.dl_batch_size=64
+persist.vendor.radio.ul_batch_enable=1
+persist.vendor.radio.ul_batch_size=32
+
+# Packet scheduler hint
+persist.vendor.radio.pkt_sched_enable=1
+persist.vendor.radio.pkt_sched_interval=5
+
+# Signal / RSRP
+persist.vendor.radio.lte_cco_enable=1
+ro.ril.hsupa.category=6
+ro.ril.hsxpa=5
+ro.ril.hsdpa.category=24

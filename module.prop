@@ -1,0 +1,6 @@
+id=mtk_bwmod
+name=MTK Extreme Bandwidth Mod
+version=v1.0
+versionCode=1
+author=mtk-bwmod
+description=Universal network optimization for all MediaTek devices. WiFi, LTE, NR/5G, TCP, VoLTE, Data Stall Recovery. Aborts on non-MTK hardware.
