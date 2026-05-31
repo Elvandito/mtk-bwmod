@@ -1,6 +1,6 @@
 # MTK Extreme Bandwidth Mod
 
-> **v1.0** — Universal Magisk module for **all MediaTek devices**  
+> Universal Magisk module for **all MediaTek devices**  
 > Helio G / P / X · Dimensity · MT6xxx · MT8xxx
 
 Pure network optimization — WiFi, LTE, NR/5G, TCP, VoLTE, data connectivity.  
