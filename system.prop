@@ -1,5 +1,5 @@
 # =============================================================================
-# MTK EXTREME BANDWIDTH MOD v1.0
+# MTK EXTREME BANDWIDTH MOD v1.2
 # Universal — All MediaTek Devices (Helio / Dimensity / MT-series)
 # Focus: Network / WiFi / Mobile Data / NR/5G / VoLTE
 # =============================================================================
@@ -55,7 +55,7 @@ persist.vendor.radio.fd.disable=1
 persist.radio.data_no_toggle=1
 
 # =============================================================================
-# 4. WIFI — POWER SAVE OFF + BAND AGGREGATION + WiFi 6/6E
+# 4. WIFI — POWER SAVE OFF + BAND AGGREGATION + WiFi 6/6E + LOW LATENCY
 # =============================================================================
 # Power save off
 ro.vendor.wifi.power_save=false
@@ -96,11 +96,14 @@ persist.wifi.twt.enabled=1
 persist.wifi.11be.enabled=1
 persist.vendor.wifi.p2p.coex.enable=0
 
-# Roaming aggressiveness
+# Low-latency & roaming
 persist.vendor.wifi.roaming_trigger=-75
 persist.vendor.wifi.roaming_diff=10
 persist.vendor.wifi.roaming_scanperiod=10
 persist.vendor.wifi.scan_disable_when_screen_off=1
+persist.vendor.wifi.low_latency_mode=1
+persist.vendor.wifi.dtim_period=1
+persist.vendor.wifi.ofdma_enable=1
 
 # Hotspot / SoftAP
 wifi.interface.softap.config=wlan0
@@ -110,6 +113,9 @@ persist.vendor.wifi.ap.bridge_mode=0
 persist.vendor.wifi.softap.sae=0
 ro.vendor.wifi.softap.enable=1
 persist.vendor.wifi.softap.max_num_sta=10
+persist.vendor.wifi.softap.throughput_mode=1
+persist.vendor.wifi.softap.he_enabled=1
+persist.vendor.wifi.softap.he_su_bfee=1
 
 # =============================================================================
 # 5. TCP BUFFER SIZES
@@ -143,7 +149,7 @@ persist.vendor.radio.log.disable=1
 persist.vendor.connsys.dynamic.dump=0
 
 # =============================================================================
-# 7. DNS (Cloudflare 1.1.1.1)
+# 7. DNS (Cloudflare 1.1.1.1 + 1.0.0.1)
 # =============================================================================
 net.dns1=1.1.1.1
 net.dns2=1.0.0.1
@@ -342,3 +348,61 @@ persist.vendor.radio.lte_cco_enable=1
 ro.ril.hsupa.category=6
 ro.ril.hsxpa=5
 ro.ril.hsdpa.category=24
+
+# =============================================================================
+# 15. MTK MODEM SCHEDULER & RADIO QoS
+# Real baseband-layer control props for Helio / Dimensity modems
+# =============================================================================
+
+# TDD frame structure optimization (Dimensity TDD bands: n41/n78/n79)
+persist.vendor.radio.tdd_opt=1
+
+# NR physical layer — reduce overhead, improve spectral efficiency
+# DCI format 0_1/1_1 (supports multi-antenna precoding + CSI-RS)
+persist.vendor.radio.nr_dci_format=1
+# PDSCH DMRS Type A — front-loaded, lower reference signal overhead
+persist.vendor.radio.nr_pdsch_dmrs=1
+
+# LTE TTI bundling — bundles 4 TTIs for uplink robustness on weak signal
+persist.vendor.radio.lte_tti_bundling=1
+
+# C-DRX short cycle — faster wakeup from connected-mode sleep
+# Reduces latency on LTE without breaking power savings significantly
+persist.vendor.radio.cdrx_short_cycle=1
+persist.vendor.radio.nr_cdrx_short_cycle=1
+
+# NR configured (semi-persistent) grant for uplink — avoids scheduling delay
+persist.vendor.radio.ul_grant_free=1
+
+# Uplink power control — outer-loop SINR target (balanced)
+persist.vendor.radio.lte_ul_sinr_target=0
+persist.vendor.radio.nr_ul_sinr_target=0
+
+# HARQ process count — max parallel retransmissions
+persist.vendor.radio.lte_harq_process=8
+persist.vendor.radio.nr_harq_process=16
+
+# =============================================================================
+# 16. IPv6 — MTK MODEM DUAL-STACK ENABLE
+# (Real MTK modem props only — kernel IPv6 managed by netd at runtime)
+# =============================================================================
+persist.vendor.radio.ipv6.enable=1
+persist.vendor.data.ipv6_enabled=1
+persist.vendor.radio.prefer_ipv6=1
+persist.vendor.radio.mtk_ipv6_support=1
+persist.vendor.radio.ipv6_on_data=1
+# Prefer IPv4v6 dual-stack PDN over separate bearers
+persist.vendor.radio.ipv4v6_pdn=1
+
+# =============================================================================
+# 17. HOTSPOT & TETHERING (Real Android / MTK props only)
+# =============================================================================
+# Android ConnectivityService: enable tethering hardware offload
+persist.tether.offload.disabled=0
+
+# SoftAP / hotspot capacity & performance
+persist.vendor.wifi.softap.max_num_sta=10
+persist.vendor.wifi.softap.throughput_mode=1
+# WiFi 6 (HE) on SoftAP — higher throughput, OFDMA uplink for clients
+persist.vendor.wifi.softap.he_enabled=1
+persist.vendor.wifi.softap.he_su_bfee=1

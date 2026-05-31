@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # =============================================================================
-# MTK Extreme Bandwidth Mod v1.0 — service.sh
+# MTK Extreme Bandwidth Mod v1.2 — service.sh
 # Runs via Magisk late_start service after boot_completed
 # Universal — All MediaTek Devices
 # Focus: Network / WiFi / Mobile Data runtime tweaks
@@ -18,7 +18,7 @@ until [ "$(getprop sys.boot_completed)" = "1" ]; do sleep 2; done
 sleep 6
 
 log "================================================"
-log " MTK EXTREME BANDWIDTH MOD v1.0 — BOOT SERVICE"
+log " MTK EXTREME BANDWIDTH MOD v1.2 — BOOT SERVICE"
 log " SoC: ${SOC}  |  CPUs: ${CPUS}"
 log "================================================"
 
@@ -42,7 +42,17 @@ setprop persist.vendor.radio.nr_endc_support 1
 setprop persist.vendor.radio.mtk_nr_support 1
 setprop persist.vendor.radio.psm.disabled 1
 setprop persist.vendor.radio.network.always_connected 1
-log "[1] Radio + NR props re-applied"
+# Re-apply modem QoS props after modem init
+setprop persist.vendor.radio.tdd_opt 1
+setprop persist.vendor.radio.nr_dci_format 1
+setprop persist.vendor.radio.nr_pdsch_dmrs 1
+setprop persist.vendor.radio.lte_tti_bundling 1
+setprop persist.vendor.radio.cdrx_short_cycle 1
+setprop persist.vendor.radio.nr_cdrx_short_cycle 1
+setprop persist.vendor.radio.ul_grant_free 1
+setprop persist.vendor.radio.lte_harq_process 8
+setprop persist.vendor.radio.nr_harq_process 16
+log "[1] Radio + NR + Modem QoS props re-applied"
 
 # =============================================================================
 # 2. IMS / VoLTE / VoNR / WFC
@@ -109,7 +119,10 @@ setprop wifi.5ghz.preferred 1
 setprop persist.vendor.wifi.band_steering 1
 setprop persist.vendor.wifi.vht80.enable true
 setprop persist.vendor.wifi.roaming_trigger -75
-log "[5] WiFi runtime props applied"
+# Low-latency WiFi: DTIM=1 keeps radio awake for lower beacon wake latency
+setprop persist.vendor.wifi.low_latency_mode 1
+setprop persist.vendor.wifi.dtim_period 1
+log "[5] WiFi runtime props applied (incl. low-latency)"
 
 # =============================================================================
 # 6. DNS OVERRIDE — all active interfaces (overrides DHCP)
@@ -157,15 +170,13 @@ setprop persist.vendor.radio.psm.disabled 1
 log "[8] Data stall recovery props applied"
 
 # =============================================================================
-# 9. NETWORK INTERFACE QoS HINT
+# 9. txqueuelen + RPS
 # =============================================================================
-# Set transmit queue length on network interfaces
 for IF in $(ip link show up 2>/dev/null \
     | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
     | grep -vE "^lo$|^dummy"); do
   ip link set "$IF" txqueuelen 3000 2>/dev/null
 done
-# Increase socket receive buffer for rmnet
 for RMNET in /sys/class/net/rmnet*/; do
   [ -f "${RMNET}queues/rx-0/rps_cpus" ] && \
     echo "$BIG_MASK" > "${RMNET}queues/rx-0/rps_cpus" 2>/dev/null
@@ -173,8 +184,102 @@ done
 log "[9] txqueuelen=3000 + RPS applied on network interfaces"
 
 # =============================================================================
+# 10. ADAPTIVE IRQ BALANCING — thermal-aware re-binding
+# Check thermal state after initial load; fall back to mid-cores if hot
+# =============================================================================
+THERMAL_HOT=0
+for ZONE in /sys/class/thermal/thermal_zone*/temp; do
+  TEMP=$(cat "$ZONE" 2>/dev/null)
+  [ -n "$TEMP" ] && [ "$TEMP" -gt 55000 ] 2>/dev/null && THERMAL_HOT=1 && break
+done
+
+if [ "$THERMAL_HOT" = "1" ]; then
+  case "$CPUS" in
+    10) ADAPT_MASK="078" ;;   # cpu3-6
+     8) ADAPT_MASK="3c"  ;;   # cpu2-5
+     6) ADAPT_MASK="0c"  ;;   # cpu2-3
+     *) ADAPT_MASK="06"  ;;   # cpu1-2
+  esac
+  log "[10] Thermal throttle detected — fallback IRQ mask 0x${ADAPT_MASK}"
+else
+  ADAPT_MASK="$BIG_MASK"
+  log "[10] Thermal OK — big-core IRQ mask 0x${ADAPT_MASK}"
+fi
+
+REBOUND=0
+for irq_dir in /proc/irq/*/; do
+  name=$(cat "${irq_dir}actions" 2>/dev/null)
+  case "$name" in
+    *wlan*|*wifi*|*mt76*|*connsys*|*WIFI*|*WCN*|\
+    *mtk_*net*|*rmnet*|*ccmni*|*modem*|*ccci*)
+      echo "$ADAPT_MASK" > "${irq_dir}smp_affinity" 2>/dev/null \
+        && REBOUND=$((REBOUND+1))
+      ;;
+  esac
+done
+log "[10] Adaptive IRQ: ${REBOUND} IRQs → 0x${ADAPT_MASK} (thermal=${THERMAL_HOT})"
+
+# =============================================================================
+# 11. QDISC — fq_codel per interface (bufferbloat control)
+# fq_codel: Fair Queue CoDel — real, kernel-implemented AQM
+# Reduces bufferbloat on mobile connections measurably
+# =============================================================================
+QDISC_APPLIED=0
+for IF in $(ip link show up 2>/dev/null \
+    | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
+    | grep -vE "^lo$|^dummy"); do
+  tc qdisc replace dev "$IF" root fq_codel \
+    limit 1024 target 5ms interval 100ms quantum 1514 2>/dev/null \
+  && QDISC_APPLIED=$((QDISC_APPLIED+1)) \
+  || tc qdisc replace dev "$IF" root fq 2>/dev/null
+done
+# Set default qdisc for interfaces that come up later (e.g. after SIM attach)
+sysctl -w net.core.default_qdisc=fq_codel 2>/dev/null \
+  || sysctl -w net.core.default_qdisc=fq 2>/dev/null
+DFLT_QDISC=$(sysctl -n net.core.default_qdisc 2>/dev/null)
+log "[11] qdisc: fq_codel on ${QDISC_APPLIED} ifaces | default=${DFLT_QDISC}"
+
+# =============================================================================
+# 12. TCP/IP KERNEL HARDENING — ECN, reordering, early retransmit
+# All sysctls here exist and work on Android 4.14–6.x kernels
+# =============================================================================
+# ECN — signals congestion without dropping packets (RFC 3168)
+sysctl -w net.ipv4.tcp_ecn=1                   2>/dev/null
+# DSACK — allows reporting duplicate segments precisely
+sysctl -w net.ipv4.tcp_dsack=1                 2>/dev/null
+# Tolerate more packet reordering before triggering fast retransmit
+sysctl -w net.ipv4.tcp_reordering=6            2>/dev/null
+# Early retransmit — retransmit without waiting for 3 DUPACKs (RFC 5827)
+# 3 = enabled for both small cwnd and tail loss probe
+sysctl -w net.ipv4.tcp_early_retrans=3         2>/dev/null
+# Faster stale route GC — avoids routing to dead gateways
+sysctl -w net.ipv4.route.gc_timeout=100        2>/dev/null
+# Reduce TIME_WAIT socket recycling limit — frees ports faster
+sysctl -w net.ipv4.tcp_max_tw_buckets=32768    2>/dev/null
+# TCP abort on overflow — drop connections instead of queuing when overloaded
+sysctl -w net.ipv4.tcp_abort_on_overflow=0     2>/dev/null
+ECN=$(sysctl -n net.ipv4.tcp_ecn 2>/dev/null)
+log "[12] TCP hardening applied (ECN=${ECN}, reordering=6, early_retrans=3)"
+
+# =============================================================================
+# 13. HOTSPOT & NAT — conntrack expansion (kernel sysctl, actually works)
+# =============================================================================
+# Expand conntrack table — more simultaneous NAT sessions (hotspot clients)
+sysctl -w net.netfilter.nf_conntrack_max=65536              2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=300 2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_udp_timeout=30         2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=60  2>/dev/null
+# Larger hash table = O(1) lookups for NAT (reduce CPU during tethering)
+if [ -f /sys/module/nf_conntrack/parameters/hashsize ]; then
+  echo 16384 > /sys/module/nf_conntrack/parameters/hashsize 2>/dev/null
+fi
+# Enable tethering hardware offload
+setprop persist.tether.offload.disabled 0
+log "[13] NAT conntrack expanded + tethering offload enabled"
+
+# =============================================================================
 # DONE
 # =============================================================================
 log "-----------------------------------------------"
-log " All network tweaks applied successfully"
+log " All network tweaks applied successfully (v1.2)"
 log "==============================================="

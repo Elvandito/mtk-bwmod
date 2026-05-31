@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # =============================================================================
-# MTK Extreme Bandwidth Mod v1.0 — customize.sh
+# MTK Extreme Bandwidth Mod v1.2 — customize.sh
 # Universal installer — all MediaTek devices
 # =============================================================================
 
@@ -21,7 +21,7 @@ RAM_GB=$(( RAM_KB / 1024 / 1024 ))
 
 ui_print ""
 ui_print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-ui_print "   MTK Extreme Bandwidth Mod v1.0"
+ui_print "   MTK Extreme Bandwidth Mod v1.2"
 ui_print "   Universal · Helio · Dimensity · MT"
 ui_print "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 ui_print ""
@@ -71,14 +71,14 @@ set_perm_recursive "$MODPATH"       root root 0755 0644
 set_perm "$MODPATH/service.sh"      root root 0755
 
 PROP_COUNT=$(grep -c "=" "$MODPATH/system.prop" 2>/dev/null || echo 0)
-ui_print "  ✓  system.prop  ($PROP_COUNT props, 14 sections)"
-ui_print "  ✓  service.sh   (9 sections, runs on boot)"
+ui_print "  ✓  system.prop  ($PROP_COUNT props, 17 sections)"
+ui_print "  ✓  service.sh   (13 sections, runs on boot)"
 ui_print ""
-ui_print "  Sections:"
+ui_print "  system.prop sections:"
 ui_print "   [01] LTE Carrier Aggregation & RIL"
 ui_print "   [02] MTK Baseband & RIL Optimization"
 ui_print "   [03] Fast Dormancy Disabled"
-ui_print "   [04] WiFi PowerSave Off + Band Agg + WiFi6"
+ui_print "   [04] WiFi PowerSave Off + Band Agg + WiFi6 + Low-Lat"
 ui_print "   [05] TCP Buffer Sizes (NR: 64MB)"
 ui_print "   [06] HW Offloading + Network Logging Off"
 ui_print "   [07] DNS Cloudflare 1.1.1.1"
@@ -89,11 +89,24 @@ ui_print "   [11] LTE-A + NR Extended EN-DC MIMO"
 ui_print "   [12] VoLTE / VoNR"
 ui_print "   [13] Network Connectivity & Data Stall"
 ui_print "   [14] Mobile Data Optimization"
+ui_print "   [15] MTK Modem Scheduler & Radio QoS"
+ui_print "   [16] IPv6 Dual-Stack (MTK modem props)"
+ui_print "   [17] Hotspot & Tethering Offload"
 ui_print ""
-ui_print "  Boot service:"
-ui_print "   Radio · IMS · TCP/BBR · UDP/QUIC"
-ui_print "   WiFi · DNS · IRQ affinity"
-ui_print "   Data stall · txqueuelen · RPS"
+ui_print "  service.sh sections:"
+ui_print "   [01] Radio + Modem QoS re-apply after modem init"
+ui_print "   [02] IMS / VoLTE / VoNR / WFC"
+ui_print "   [03] TCP / BBR congestion control"
+ui_print "   [04] UDP / QUIC buffers"
+ui_print "   [05] WiFi runtime (incl. low-latency / DTIM)"
+ui_print "   [06] DNS override on all interfaces"
+ui_print "   [07] Network IRQ → big CPU cores"
+ui_print "   [08] Data stall recovery"
+ui_print "   [09] txqueuelen=3000 + RPS on rmnet"
+ui_print "   [10] Adaptive IRQ rebalance (thermal-aware)"
+ui_print "   [11] fq_codel per-interface (bufferbloat)"
+ui_print "   [12] TCP hardening — ECN / DSACK / early retransmit"
+ui_print "   [13] NAT conntrack expand + tethering offload"
 ui_print ""
 ui_print "  Log: /data/local/tmp/mtk_bwmod.log"
 ui_print ""
