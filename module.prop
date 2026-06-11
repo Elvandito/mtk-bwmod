@@ -1,6 +1,6 @@
 id=mtk_bwmod
 name=MTK Extreme Bandwidth Mod
-version=v1.2
-versionCode=3
+version=v1.8
+versionCode=1
 author=Elvan
-description=Universal network optimization for MediaTek devices. LTE CA, NR/5G SA+NSA, VoLTE/VoNR, TCP/BBR, fq_codel, ECN, MTK Modem QoS, Adaptive IRQ, WiFi 6/6E, Hotspot NAT. Aborts on non-MTK hardware.
+description=Universal network optimization for all MediaTek (Helio/Dimensity). WiFi · LTE · NR/5G · TCP/BBR · VoLTE · 3 profiles (Performance/Balanced/Battery). Aborts on non-MTK.

@@ -1,6 +1,6 @@
 # MTK Extreme Bandwidth Mod
 
-> Universal Magisk module for **all MediaTek devices**  
+> **v1.0** — Universal Magisk module for **all MediaTek devices**  
 > Helio G / P / X · Dimensity · MT6xxx · MT8xxx
 
 Pure network optimization — WiFi, LTE, NR/5G, TCP, VoLTE, data connectivity.  
@@ -28,8 +28,9 @@ No GPU/audio/memory tweaks. Network only.
 | 12 | VoLTE / VoNR | HD Voice + 5G calling, WFC, debug override |
 | 13 | Connectivity & Stall Recovery | Data stall detection, PDCP/RLC aggregation, RRC timers, keepalive |
 | 14 | Mobile Data Optimization | MTU 1500, DL/UL batch 64/32 packets, packet scheduler, signal threshold |
+| 15 | Unlock Network Features in Settings UI | Shows 5G/VoLTE/WFC/ViLTE toggles, full network mode selector, APN editor, signal dBm — works on AOSP, MIUI, HyperOS, ColorOS, Origins, and all custom ROMs |
 
-### `service.sh` — 9 Sections (runs every boot)
+### `service.sh` — 10 Sections (runs every boot)
 
 | # | Section | What it does |
 |---|---------|-------------|
@@ -42,6 +43,24 @@ No GPU/audio/memory tweaks. Network only.
 | 7 | Network IRQ affinity | Binds wlan/modem IRQs to big CPU cores (adaptive mask per core count) |
 | 8 | Data stall recovery | Runtime keepalive + PSM disabled |
 | 9 | txqueuelen + RPS | Sets txqueuelen=3000 on all interfaces, RPS on rmnet |
+| 10 | eSIM runtime | Forces eUICC, LPA, GSMA RSP, hot-swap props after modem init |
+
+### New sections added
+
+| # | Section | What it does |
+|---|---------|-------------|
+| 16 | MTK CCCI | Cross Chip Communication Interface — modem↔AP handshake, bypass FSD |
+| 17 | Antenna Switch & RX Diversity | 4RX diversity for LTE + NR, antenna impedance, SAR switch |
+| 18 | CA Scheduler | Up to 4 LTE CA components, BW class A-D, NR intra+inter band CA |
+| 19 | ConnAC WiFi Chip | MT663x/MT665x — A-MPDU/A-MSDU, OFDMA DL+UL, SU/MU beamformee, WPA3 |
+| 20 | IMS Stack Extended | AMR-WB, EVS, Opus codecs, RTCP-XR, emergency VoWiFi, bearer persist |
+| 21 | Network Search | Fast camp, RAT priority NR>LTE>WCDMA>GSM, PLMN scan interval |
+| 22 | Signal Processing & Uplink | AFC, ULFD, MCS boost UL/DL, 4-rank MIMO, CQI/CSI period tuning |
+| 23 | PS/CS Fallback + SRVCC | SRVCC type 3, CSFB timeout, ECBM, PS2 RAT scan |
+| 24 | Data Throttle & QoS | Throttle=0, QoS scheduler, 5G network slicing, URSP |
+| 25 | Modem Power & Sleep | Fast wakeup, sleep threshold -100dBm, PMIC ctrl, plmn wakelock off |
+| 26 | ConnSys Coexistence | WiFi priority over BT/GPS, PTA enable, BT coex mode 2 |
+| 27 | WiFi AP Communication | WMM/EDCA, Block ACK 64-frame window, ADDTS QoS Traffic Stream, SU/MU beamforming CSI feedback to AP, 802.11k Neighbor Report, 802.11v BSS Transition, 802.11r Fast Roaming, 2×2 MIMO spatial streams, rate adaptation |
 
 ---
 

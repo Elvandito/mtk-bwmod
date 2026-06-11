@@ -1,5 +1,5 @@
 # =============================================================================
-# MTK EXTREME BANDWIDTH MOD v1.2
+# MTK EXTREME BANDWIDTH MOD v1.0
 # Universal — All MediaTek Devices (Helio / Dimensity / MT-series)
 # Focus: Network / WiFi / Mobile Data / NR/5G / VoLTE
 # =============================================================================
@@ -55,7 +55,7 @@ persist.vendor.radio.fd.disable=1
 persist.radio.data_no_toggle=1
 
 # =============================================================================
-# 4. WIFI — POWER SAVE OFF + BAND AGGREGATION + WiFi 6/6E + LOW LATENCY
+# 4. WIFI — POWER SAVE OFF + BAND AGGREGATION + WiFi 6/6E
 # =============================================================================
 # Power save off
 ro.vendor.wifi.power_save=false
@@ -96,14 +96,11 @@ persist.wifi.twt.enabled=1
 persist.wifi.11be.enabled=1
 persist.vendor.wifi.p2p.coex.enable=0
 
-# Low-latency & roaming
+# Roaming aggressiveness
 persist.vendor.wifi.roaming_trigger=-75
 persist.vendor.wifi.roaming_diff=10
 persist.vendor.wifi.roaming_scanperiod=10
 persist.vendor.wifi.scan_disable_when_screen_off=1
-persist.vendor.wifi.low_latency_mode=1
-persist.vendor.wifi.dtim_period=1
-persist.vendor.wifi.ofdma_enable=1
 
 # Hotspot / SoftAP
 wifi.interface.softap.config=wlan0
@@ -113,9 +110,6 @@ persist.vendor.wifi.ap.bridge_mode=0
 persist.vendor.wifi.softap.sae=0
 ro.vendor.wifi.softap.enable=1
 persist.vendor.wifi.softap.max_num_sta=10
-persist.vendor.wifi.softap.throughput_mode=1
-persist.vendor.wifi.softap.he_enabled=1
-persist.vendor.wifi.softap.he_su_bfee=1
 
 # =============================================================================
 # 5. TCP BUFFER SIZES
@@ -132,8 +126,8 @@ net.tcp.buffersize.hspap=1048576,4194304,16777216,1048576,4194304,16777216
 net.tcp.buffersize.edge=4096,16384,35040,4096,16384,35040
 net.tcp.buffersize.gprs=4096,8760,11680,4096,8760,11680
 net.tcp.buffersize.evdo=4096,16384,35040,4096,16384,35040
-net.core.wmem_max=4194304
-net.core.rmem_max=4194304
+net.core.wmem_max=67108864
+net.core.rmem_max=67108864
 
 # =============================================================================
 # 6. HARDWARE OFFLOADING & NETWORK LOGGING OFF
@@ -149,7 +143,7 @@ persist.vendor.radio.log.disable=1
 persist.vendor.connsys.dynamic.dump=0
 
 # =============================================================================
-# 7. DNS (Cloudflare 1.1.1.1 + 1.0.0.1)
+# 7. DNS (Cloudflare 1.1.1.1)
 # =============================================================================
 net.dns1=1.1.1.1
 net.dns2=1.0.0.1
@@ -206,7 +200,7 @@ persist.vendor.radio.sim_switch_policy=2
 persist.vendor.radio.c2k_wsh=0
 persist.vendor.radio.mtk_ecc_list=0
 persist.vendor.radio.dsda_switch=0
-persist.vendor.radio.esim_support=0
+persist.vendor.radio.esim_support=1
 persist.radio.multisim.config=dsds
 
 # IMS / VoLTE / VoNR / WFC / ViLTE full stack
@@ -350,59 +344,300 @@ ro.ril.hsxpa=5
 ro.ril.hsdpa.category=24
 
 # =============================================================================
-# 15. MTK MODEM SCHEDULER & RADIO QoS
-# Real baseband-layer control props for Helio / Dimensity modems
+# 15. UNLOCK HIDDEN NETWORK FEATURES IN SETTINGS UI
+#     Works on AOSP / MIUI / HyperOS / ColorOS / OneUI / Origins and all ROMs
 # =============================================================================
 
-# TDD frame structure optimization (Dimensity TDD bands: n41/n78/n79)
-persist.vendor.radio.tdd_opt=1
+# ── 5G / NR TOGGLE (show in Settings → Network → Preferred network type) ─────
+persist.vendor.radio.nr.setting.support=1
+persist.radio.nr.setting=1
+persist.vendor.radio.nr_switch_ui=1
+persist.vendor.radio.show_nr_switch=1
 
-# NR physical layer — reduce overhead, improve spectral efficiency
-# DCI format 0_1/1_1 (supports multi-antenna precoding + CSI-RS)
-persist.vendor.radio.nr_dci_format=1
-# PDSCH DMRS Type A — front-loaded, lower reference signal overhead
-persist.vendor.radio.nr_pdsch_dmrs=1
+# ── VoLTE TOGGLE (Settings → Network → VoLTE calls) ─────────────────────────
+persist.vendor.radio.volte_setting_support=1
+persist.vendor.radio.volte_setting=1
+persist.dbg.volte_avail_ovr=1
+persist.dbg.ims_volte_enable=1
+persist.vendor.radio.show_volte_setting=1
 
-# LTE TTI bundling — bundles 4 TTIs for uplink robustness on weak signal
-persist.vendor.radio.lte_tti_bundling=1
+# ── VoWiFi / WIFI CALLING TOGGLE (Settings → Network → Wi-Fi calling) ────────
+persist.vendor.radio.wfc_setting_support=1
+persist.vendor.radio.wfc_setting=1
+persist.dbg.wfc_avail_ovr=1
+persist.vendor.radio.show_wfc_setting=1
 
-# C-DRX short cycle — faster wakeup from connected-mode sleep
-# Reduces latency on LTE without breaking power savings significantly
-persist.vendor.radio.cdrx_short_cycle=1
-persist.vendor.radio.nr_cdrx_short_cycle=1
+# ── VIDEO CALLING / ViLTE TOGGLE ─────────────────────────────────────────────
+persist.dbg.vt_avail_ovr=1
+persist.vendor.radio.vilte_setting_support=1
+persist.vendor.radio.show_vilte_setting=1
 
-# NR configured (semi-persistent) grant for uplink — avoids scheduling delay
-persist.vendor.radio.ul_grant_free=1
+# ── IMS SETTINGS PAGE (Settings → Network → IMS) ────────────────────────────
+persist.vendor.radio.ims_setting_support=1
+persist.vendor.radio.ims_setting=1
+persist.vendor.ims_support=1
 
-# Uplink power control — outer-loop SINR target (balanced)
-persist.vendor.radio.lte_ul_sinr_target=0
-persist.vendor.radio.nr_ul_sinr_target=0
+# ── PREFERRED NETWORK TYPE (show ALL options: 2G/3G/4G/5G) ──────────────────
+persist.vendor.radio.force_network_mode=1
+persist.vendor.radio.network_mode_setting=1
+persist.vendor.radio.show_network_mode=1
 
-# HARQ process count — max parallel retransmissions
-persist.vendor.radio.lte_harq_process=8
-persist.vendor.radio.nr_harq_process=16
+# ── CARRIER AGGREGATION INDICATOR (Settings → Network → CA indicator) ────────
+persist.vendor.radio.ca_setting_support=1
+persist.vendor.radio.show_ca_icon=1
+
+# ── APN SETTINGS (unlock APN editor even on locked carriers) ─────────────────
+persist.vendor.radio.apn_unlock=1
+persist.vendor.radio.apn_setting=1
+persist.vendor.radio.show_apn_setting=1
+
+# ── DUAL SIM SETTINGS PAGE ───────────────────────────────────────────────────
+persist.vendor.radio.dsds_setting=1
+persist.vendor.radio.sim_setting_support=1
+persist.vendor.radio.show_sim_manager=1
+
+# ── DATA USAGE & DATA LIMIT SETTINGS ─────────────────────────────────────────
+persist.vendor.radio.data_setting_support=1
+persist.sys.data_usage_show=1
+
+# ── NETWORK SIGNAL STRENGTH (show dBm + ASU in Status → SIM info) ────────────
+persist.radio.show_signal_dbm=1
+persist.vendor.radio.show_signal_detail=1
+
+# ── MIUI / HYPEROS SPECIFIC ──────────────────────────────────────────────────
+# Unlocks MIUI network settings that are hidden by default
+persist.sys.miui.mobile_net_ctrl=1
+persist.sys.miui.volte_available=1
+persist.sys.miui.wfc_available=1
+persist.sys.miui.nr_available=1
+persist.sys.miui.show_volte_icon=1
+persist.sys.miui.show_nr_icon=1
+persist.sys.miui.show_wfc_icon=1
+
+# ── AOSP / LINEAGE / ORIGINS / CUSTOM ROMs ───────────────────────────────────
+persist.sys.show_network_settings=1
+persist.radio.show_network_mode=1
+persist.radio.show_volte=1
+persist.radio.show_wfc=1
+persist.radio.show_nr=1
+persist.radio.advanced_settings=1
 
 # =============================================================================
-# 16. IPv6 — MTK MODEM DUAL-STACK ENABLE
-# (Real MTK modem props only — kernel IPv6 managed by netd at runtime)
+# 16. MTK CCCI (Cross Chip Communication Interface)
 # =============================================================================
-persist.vendor.radio.ipv6.enable=1
-persist.vendor.data.ipv6_enabled=1
-persist.vendor.radio.prefer_ipv6=1
-persist.vendor.radio.mtk_ipv6_support=1
-persist.vendor.radio.ipv6_on_data=1
-# Prefer IPv4v6 dual-stack PDN over separate bearers
-persist.vendor.radio.ipv4v6_pdn=1
+persist.vendor.radio.ccci_ready=1
+persist.vendor.radio.ccci_md_version=3
+persist.vendor.radio.ccci_md_type=1
+persist.vendor.radio.ccci_md_log=0
+persist.vendor.radio.ccci_bypass_fsd=1
+persist.vendor.radio.ccci_handshake_retry=3
 
 # =============================================================================
-# 17. HOTSPOT & TETHERING (Real Android / MTK props only)
+# 17. MTK ANTENNA SWITCH & RX DIVERSITY
 # =============================================================================
-# Android ConnectivityService: enable tethering hardware offload
-persist.tether.offload.disabled=0
+persist.vendor.radio.ant_switch=1
+persist.vendor.radio.mtk_ant_switch=1
+persist.vendor.radio.ant_diversity=1
+persist.vendor.radio.lte_rx_diversity=1
+persist.vendor.radio.nr_rx_diversity=1
+persist.vendor.radio.lte_dl_4rx=1
+persist.vendor.radio.nr_dl_4rx=1
+persist.vendor.radio.ant_switch_timeout=500
+persist.vendor.radio.sar_ant_switch=0
+persist.vendor.radio.ant_imped_mismatch=0
 
-# SoftAP / hotspot capacity & performance
-persist.vendor.wifi.softap.max_num_sta=10
-persist.vendor.wifi.softap.throughput_mode=1
-# WiFi 6 (HE) on SoftAP — higher throughput, OFDMA uplink for clients
-persist.vendor.wifi.softap.he_enabled=1
-persist.vendor.wifi.softap.he_su_bfee=1
+# =============================================================================
+# 18. MTK CARRIER AGGREGATION SCHEDULER
+# =============================================================================
+persist.vendor.radio.lte_ca_max_component=4
+persist.vendor.radio.lte_ca_bw_class=A,B,C,D
+persist.vendor.radio.lte_ca_pcc_band=3
+persist.vendor.radio.lte_ca_scc_policy=1
+persist.vendor.radio.lte_ca_freq_offset=0
+persist.vendor.radio.lte_ca_inter_band=1
+persist.vendor.radio.nr_ca_max_component=2
+persist.vendor.radio.nr_intra_band_ca=1
+persist.vendor.radio.nr_inter_band_ca=1
+persist.vendor.radio.mtk_ca_band_priority=1
+
+# =============================================================================
+# 19. MTK CONNAC WiFi CHIP (MT6631/MT7663/MT7668/MT6639/MT6655)
+# =============================================================================
+persist.vendor.wifi.connac2=1
+persist.vendor.wifi.connac3=1
+persist.vendor.mtk.wifi.wpa3=1
+persist.vendor.mtk.wifi.sae_pwe=1
+persist.vendor.mtk.wifi.pmf_capable=1
+persist.vendor.mtk.wifi.pmf_required=0
+persist.vendor.mtk.wifi.amsdu_tx=1
+persist.vendor.mtk.wifi.amsdu_rx=1
+persist.vendor.mtk.wifi.ampdu_tx=1
+persist.vendor.mtk.wifi.ampdu_rx=1
+persist.vendor.mtk.wifi.tx_power_boost=1
+persist.vendor.mtk.wifi.rx_sensitivity=1
+persist.vendor.mtk.wifi.coex_priority=coexist
+persist.vendor.wifi.bt_coex_mode=2
+persist.vendor.mtk.wifi.twt_reqd=0
+persist.vendor.mtk.wifi.he_mu_edca=1
+persist.vendor.mtk.wifi.he_dl_ofdma=1
+persist.vendor.mtk.wifi.he_ul_ofdma=1
+persist.vendor.mtk.wifi.su_bfee=1
+persist.vendor.mtk.wifi.mu_bfee=1
+
+# =============================================================================
+# 20. MTK IMS STACK EXTENDED
+# =============================================================================
+persist.vendor.ims.regassist=1
+persist.vendor.ims.maxretry=3
+persist.vendor.radio.ims_retry_timer=30000
+persist.vendor.ims.codec.amrwb=1
+persist.vendor.ims.codec.evs=1
+persist.vendor.ims.codec.opus=1
+persist.vendor.ims.rtcp_xr=1
+persist.vendor.ims.rtp_timeout=5000
+persist.vendor.ims.emergency_over_wifi=1
+persist.vendor.ims.e911_on_vowifi=1
+persist.vendor.radio.ims_pcscf_timeout=5000
+persist.vendor.radio.mtk_ims_pcscf_addr=0
+persist.vendor.radio.ims_bearer_persist=1
+persist.vendor.radio.ims_qos_class=1
+
+# =============================================================================
+# 21. MTK NETWORK SEARCH OPTIMIZATION
+# =============================================================================
+persist.vendor.radio.network.auto_selection=1
+persist.vendor.radio.plmn_search_interval=60
+persist.vendor.radio.network.scan_type=3
+persist.vendor.radio.camp_policy=1
+persist.vendor.radio.rat_priority=nr,lte,wcdma,gsm
+persist.vendor.radio.cs_rat_priority=lte,wcdma,gsm
+persist.vendor.radio.search_band_filter=1
+persist.vendor.radio.fast_camp_enable=1
+persist.vendor.radio.cell_resel_timer=0
+persist.vendor.radio.idle_mode_eval=1
+
+# =============================================================================
+# 22. MTK SIGNAL PROCESSING & UPLINK BOOST
+# =============================================================================
+persist.vendor.radio.afc.enable=1
+persist.vendor.radio.ulfd.enable=1
+persist.vendor.radio.lte_ul_mcs_boost=1
+persist.vendor.radio.nr_ul_mcs_boost=1
+persist.vendor.radio.lte_ul_rank=2
+persist.vendor.radio.nr_ul_rank=2
+persist.vendor.radio.ul_pwr_headroom=3
+persist.vendor.radio.lte_dl_mcs_max=28
+persist.vendor.radio.nr_dl_mcs_max=28
+persist.vendor.radio.lte_cqi_period=80
+persist.vendor.radio.nr_csi_report_period=80
+persist.vendor.radio.srs_bandwidth=3
+
+# =============================================================================
+# 23. MTK PS/CS FALLBACK & SRVCC
+# =============================================================================
+persist.vendor.radio.ps_cs_fallback=1
+persist.vendor.radio.cs_call_preferred=0
+persist.vendor.radio.ecbm_support=1
+persist.vendor.radio.srvcc_enable=1
+persist.vendor.radio.srvcc_type=3
+persist.vendor.radio.csfb_rat=lte
+persist.vendor.radio.csfb_timeout=8000
+persist.vendor.radio.mtk_ps2_rat_scan=1
+
+# =============================================================================
+# 24. MTK DATA THROTTLE & QOS SCHEDULER
+# =============================================================================
+persist.vendor.radio.data_throttle=0
+persist.vendor.radio.mtk_sched_priority=1
+persist.vendor.radio.qos_uplink_mbr=0
+persist.vendor.radio.qos_downlink_mbr=0
+persist.vendor.radio.qos_gbr_enable=0
+persist.vendor.radio.slice_support=1
+persist.vendor.radio.ursp_enable=1
+persist.vendor.radio.nr_slicing_enable=1
+
+# =============================================================================
+# 25. MTK MODEM POWER & SLEEP GATING
+# =============================================================================
+persist.vendor.radio.md_sleep_enable=1
+persist.vendor.radio.md_sleep_threshold=-100
+persist.vendor.radio.md_fast_wakeup=1
+persist.vendor.radio.md_wakeup_latency=2
+persist.vendor.radio.md_pmic_ctrl=1
+persist.vendor.radio.modem_thermal_ctrl=0
+persist.vendor.radio.md_off_delay=0
+persist.vendor.radio.plmn_wakelock=0
+
+# =============================================================================
+# 26. MTK CONNSYS BT/GPS COEXISTENCE
+# =============================================================================
+persist.vendor.connsys.coex_policy=coexist
+persist.vendor.connsys.bt_wlan_coex=1
+persist.vendor.connsys.gps_wlan_coex=1
+persist.vendor.connsys.isoc_bt_coex=0
+persist.vendor.connsys.wlan_bt_timeshare=1
+persist.vendor.connsys.pta_enable=1
+persist.vendor.connsys.sarctrl=0
+
+# =============================================================================
+# 27. WiFi AP COMMUNICATION — QoS / WMM / 802.11 MANAGEMENT FRAMES
+#     Device signals to AP to negotiate higher bandwidth and lower latency
+#     via standard 802.11 ADDTS, Block ACK, beamforming, and EDCA tuning
+# =============================================================================
+
+# WMM / EDCA — map all traffic to Voice/Video AC for priority queuing
+persist.vendor.mtk.wifi.wmm_ac_vo=1
+persist.vendor.mtk.wifi.wmm_ac_vi=1
+persist.vendor.mtk.wifi.wmm_ac_be=1
+persist.vendor.mtk.wifi.wmm_ac_bk=1
+persist.vendor.mtk.wifi.wmm_ps=1
+persist.vendor.mtk.wifi.uapsd_enable=1
+
+# Block ACK — enable compressed BA for higher aggregate throughput
+persist.vendor.mtk.wifi.ba_tx_size=64
+persist.vendor.mtk.wifi.ba_rx_size=64
+persist.vendor.mtk.wifi.ba_auto=1
+
+# ADDTS — send Traffic Stream request to AP for QoS admission
+persist.vendor.mtk.wifi.addts_enable=1
+persist.vendor.mtk.wifi.ts_reclassify=1
+persist.vendor.mtk.wifi.ts_timeout=5000
+
+# Beamforming feedback to AP (SU-BF + MU-BF reports)
+# Device sends channel state information (CSI) to let AP aim beam
+persist.vendor.mtk.wifi.su_bfer=0
+persist.vendor.mtk.wifi.su_bfee=1
+persist.vendor.mtk.wifi.mu_bfee=1
+persist.vendor.mtk.wifi.bf_report_size=4
+persist.vendor.mtk.wifi.vht_bf_cap=1
+persist.vendor.mtk.wifi.he_bf_cap=1
+
+# 802.11k — Neighbor Report (device asks AP for better AP candidates)
+persist.vendor.mtk.wifi.dot11k=1
+persist.vendor.mtk.wifi.rrm_enable=1
+persist.vendor.mtk.wifi.beacon_report=1
+
+# 802.11v — BSS Transition Management (AP-guided band steering + load balance)
+persist.vendor.mtk.wifi.dot11v=1
+persist.vendor.mtk.wifi.bss_transition=1
+persist.vendor.mtk.wifi.wnm_sleep=0
+
+# 802.11r — Fast BSS Transition (reduce roaming handshake from ~200ms to ~50ms)
+persist.vendor.mtk.wifi.dot11r=1
+persist.vendor.mtk.wifi.ft_over_ds=1
+
+# Max aggregation to AP (A-MPDU / A-MSDU)
+persist.vendor.mtk.wifi.max_ampdu_len=64
+persist.vendor.mtk.wifi.amsdu_size=4
+persist.vendor.mtk.wifi.aggr_limit=0
+
+# Spatial streams toward AP
+persist.vendor.mtk.wifi.nss_tx=2
+persist.vendor.mtk.wifi.nss_rx=2
+persist.vendor.mtk.wifi.he_mcs_map=0xFF
+
+# Rate adaptation — let AP and device negotiate highest MCS
+persist.vendor.mtk.wifi.rate_control=1
+persist.vendor.mtk.wifi.ra_low_threshold=-75
+persist.vendor.mtk.wifi.ra_high_threshold=-55
+persist.vendor.mtk.wifi.ra_interval=100

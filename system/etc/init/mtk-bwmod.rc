@@ -1,0 +1,85 @@
+# =============================================================================
+# MTK Extreme Bandwidth Mod v1.8 — Android Init Script
+# Author: Elvan
+# Layer: Android init system (runs BEFORE Magisk service.sh)
+# Trigger: post-fs-data (early) + boot_completed (after modules loaded)
+# Universal: All MediaTek devices, Android 8+
+# =============================================================================
+
+# ── EARLY STAGE: post-fs-data ─────────────────────────────────────────────────
+# Runs before networking is fully up — safe kernel params only
+# No module-dependent settings here (conntrack, BBR need modules loaded)
+
+on post-fs-data
+    # TCP core tuning
+    write /proc/sys/net/ipv4/tcp_fastopen                   3
+    write /proc/sys/net/ipv4/tcp_sack                       1
+    write /proc/sys/net/ipv4/tcp_fack                       1
+    write /proc/sys/net/ipv4/tcp_window_scaling             1
+    write /proc/sys/net/ipv4/tcp_timestamps                 1
+    write /proc/sys/net/ipv4/tcp_ecn                        1
+    write /proc/sys/net/ipv4/tcp_ecn_fallback               1
+    write /proc/sys/net/ipv4/tcp_slow_start_after_idle      0
+    write /proc/sys/net/ipv4/tcp_keepalive_time             30
+    write /proc/sys/net/ipv4/tcp_keepalive_intvl            10
+    write /proc/sys/net/ipv4/tcp_keepalive_probes           3
+    write /proc/sys/net/ipv4/tcp_fin_timeout                15
+    write /proc/sys/net/ipv4/tcp_mtu_probing                1
+    write /proc/sys/net/ipv4/tcp_no_metrics_save            1
+    write /proc/sys/net/ipv4/tcp_notsent_lowat              131072
+    write /proc/sys/net/ipv4/ip_local_port_range            "1024 65535"
+
+    # UDP base buffers
+    write /proc/sys/net/ipv4/udp_rmem_min                   65536
+    write /proc/sys/net/ipv4/udp_wmem_min                   65536
+
+    # Socket core
+    write /proc/sys/net/core/somaxconn                      8192
+    write /proc/sys/net/core/netdev_budget                  600
+    write /proc/sys/net/core/netdev_budget_usecs            4000
+    write /proc/sys/net/core/netdev_max_backlog             32768
+    write /proc/sys/net/core/rps_sock_flow_entries          32768
+    write /proc/sys/net/core/optmem_max                     81920
+
+    # IPv4 routing optimization
+    write /proc/sys/net/ipv4/route/gc_timeout               100
+    write /proc/sys/net/ipv4/route/min_adv_mss              1280
+    write /proc/sys/net/ipv4/conf/all/rp_filter             1
+    write /proc/sys/net/ipv4/conf/default/rp_filter         1
+    write /proc/sys/net/ipv4/conf/all/accept_source_route   0
+    write /proc/sys/net/ipv4/conf/all/accept_redirects      0
+    write /proc/sys/net/ipv4/conf/all/send_redirects        0
+
+    # IPv6 base
+    write /proc/sys/net/ipv6/conf/all/accept_redirects      0
+    write /proc/sys/net/ipv6/conf/default/accept_redirects  0
+
+# ── LATE STAGE: boot_completed ────────────────────────────────────────────────
+# Runs after all modules and services loaded
+# BBR requires tcp_bbr kernel module, conntrack requires nf_conntrack
+
+on property:sys.boot_completed=1
+    # BBR congestion control (requires tcp_bbr.ko loaded)
+    write /proc/sys/net/ipv4/tcp_congestion_control         bbr
+
+    # TCP buffer sizes — 64MB for NR/5G
+    write /proc/sys/net/core/rmem_max                       67108864
+    write /proc/sys/net/core/wmem_max                       67108864
+    write /proc/sys/net/core/rmem_default                   4194304
+    write /proc/sys/net/core/wmem_default                   4194304
+    write /proc/sys/net/ipv4/tcp_rmem                       "4096 1048576 67108864"
+    write /proc/sys/net/ipv4/tcp_wmem                       "4096 1048576 67108864"
+    write /proc/sys/net/ipv4/udp_mem                        "65536 131072 262144"
+
+    # Conntrack scaling (requires nf_conntrack module)
+    write /proc/sys/net/netfilter/nf_conntrack_max                          2000000
+    write /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_established      600
+    write /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_time_wait        30
+    write /proc/sys/net/netfilter/nf_conntrack_tcp_timeout_close_wait       15
+    write /proc/sys/net/netfilter/nf_conntrack_udp_timeout                  30
+    write /proc/sys/net/netfilter/nf_conntrack_udp_timeout_stream           120
+    write /proc/sys/net/netfilter/nf_conntrack_tcp_loose                    1
+
+    # NAPI final tuning
+    write /proc/sys/net/core/netdev_budget                  600
+    write /proc/sys/net/core/netdev_max_backlog             32768

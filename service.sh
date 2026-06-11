@@ -1,6 +1,6 @@
 #!/system/bin/sh
 # =============================================================================
-# MTK Extreme Bandwidth Mod v1.2 — service.sh
+# MTK Extreme Bandwidth Mod v1.0 — service.sh
 # Runs via Magisk late_start service after boot_completed
 # Universal — All MediaTek Devices
 # Focus: Network / WiFi / Mobile Data runtime tweaks
@@ -18,7 +18,7 @@ until [ "$(getprop sys.boot_completed)" = "1" ]; do sleep 2; done
 sleep 6
 
 log "================================================"
-log " MTK EXTREME BANDWIDTH MOD v1.2 — BOOT SERVICE"
+log " MTK EXTREME BANDWIDTH MOD v1.0 — BOOT SERVICE"
 log " SoC: ${SOC}  |  CPUs: ${CPUS}"
 log "================================================"
 
@@ -42,17 +42,7 @@ setprop persist.vendor.radio.nr_endc_support 1
 setprop persist.vendor.radio.mtk_nr_support 1
 setprop persist.vendor.radio.psm.disabled 1
 setprop persist.vendor.radio.network.always_connected 1
-# Re-apply modem QoS props after modem init
-setprop persist.vendor.radio.tdd_opt 1
-setprop persist.vendor.radio.nr_dci_format 1
-setprop persist.vendor.radio.nr_pdsch_dmrs 1
-setprop persist.vendor.radio.lte_tti_bundling 1
-setprop persist.vendor.radio.cdrx_short_cycle 1
-setprop persist.vendor.radio.nr_cdrx_short_cycle 1
-setprop persist.vendor.radio.ul_grant_free 1
-setprop persist.vendor.radio.lte_harq_process 8
-setprop persist.vendor.radio.nr_harq_process 16
-log "[1] Radio + NR + Modem QoS props re-applied"
+log "[1] Radio + NR props re-applied"
 
 # =============================================================================
 # 2. IMS / VoLTE / VoNR / WFC
@@ -74,12 +64,13 @@ log "[2] IMS/VoLTE/VoNR/WFC applied"
 # 3. TCP KERNEL TUNING (BBR + buffers)
 # =============================================================================
 sysctl -w net.ipv4.tcp_window_scaling=1              2>/dev/null
-sysctl -w net.core.rmem_max=33554432                 2>/dev/null
-sysctl -w net.core.wmem_max=33554432                 2>/dev/null
+sysctl -w net.core.rmem_max=67108864                 2>/dev/null
+sysctl -w net.core.wmem_max=67108864                 2>/dev/null
 sysctl -w net.core.rmem_default=4194304              2>/dev/null
 sysctl -w net.core.wmem_default=4194304              2>/dev/null
-sysctl -w net.ipv4.tcp_rmem="4096 1048576 33554432"  2>/dev/null
-sysctl -w net.ipv4.tcp_wmem="4096 1048576 33554432"  2>/dev/null
+sysctl -w net.ipv4.tcp_rmem="4096 1048576 67108864"  2>/dev/null
+sysctl -w net.ipv4.tcp_wmem="4096 1048576 67108864"  2>/dev/null
+sysctl -w net.ipv4.tcp_notsent_lowat=131072          2>/dev/null
 sysctl -w net.ipv4.tcp_retries2=8                   2>/dev/null
 sysctl -w net.ipv4.tcp_syn_retries=3                2>/dev/null
 sysctl -w net.ipv4.tcp_keepalive_time=30            2>/dev/null
@@ -119,10 +110,7 @@ setprop wifi.5ghz.preferred 1
 setprop persist.vendor.wifi.band_steering 1
 setprop persist.vendor.wifi.vht80.enable true
 setprop persist.vendor.wifi.roaming_trigger -75
-# Low-latency WiFi: DTIM=1 keeps radio awake for lower beacon wake latency
-setprop persist.vendor.wifi.low_latency_mode 1
-setprop persist.vendor.wifi.dtim_period 1
-log "[5] WiFi runtime props applied (incl. low-latency)"
+log "[5] WiFi runtime props applied"
 
 # =============================================================================
 # 6. DNS OVERRIDE — all active interfaces (overrides DHCP)
@@ -170,13 +158,15 @@ setprop persist.vendor.radio.psm.disabled 1
 log "[8] Data stall recovery props applied"
 
 # =============================================================================
-# 9. txqueuelen + RPS
+# 9. NETWORK INTERFACE QoS HINT
 # =============================================================================
+# Set transmit queue length on network interfaces
 for IF in $(ip link show up 2>/dev/null \
     | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
     | grep -vE "^lo$|^dummy"); do
   ip link set "$IF" txqueuelen 3000 2>/dev/null
 done
+# Increase socket receive buffer for rmnet
 for RMNET in /sys/class/net/rmnet*/; do
   [ -f "${RMNET}queues/rx-0/rps_cpus" ] && \
     echo "$BIG_MASK" > "${RMNET}queues/rx-0/rps_cpus" 2>/dev/null
@@ -184,102 +174,297 @@ done
 log "[9] txqueuelen=3000 + RPS applied on network interfaces"
 
 # =============================================================================
-# 10. ADAPTIVE IRQ BALANCING — thermal-aware re-binding
-# Check thermal state after initial load; fall back to mid-cores if hot
+# 10. UNLOCK HIDDEN NETWORK FEATURES IN SETTINGS UI (runtime re-apply)
 # =============================================================================
-THERMAL_HOT=0
-for ZONE in /sys/class/thermal/thermal_zone*/temp; do
-  TEMP=$(cat "$ZONE" 2>/dev/null)
-  [ -n "$TEMP" ] && [ "$TEMP" -gt 55000 ] 2>/dev/null && THERMAL_HOT=1 && break
-done
-
-if [ "$THERMAL_HOT" = "1" ]; then
-  case "$CPUS" in
-    10) ADAPT_MASK="078" ;;   # cpu3-6
-     8) ADAPT_MASK="3c"  ;;   # cpu2-5
-     6) ADAPT_MASK="0c"  ;;   # cpu2-3
-     *) ADAPT_MASK="06"  ;;   # cpu1-2
-  esac
-  log "[10] Thermal throttle detected — fallback IRQ mask 0x${ADAPT_MASK}"
-else
-  ADAPT_MASK="$BIG_MASK"
-  log "[10] Thermal OK — big-core IRQ mask 0x${ADAPT_MASK}"
-fi
-
-REBOUND=0
-for irq_dir in /proc/irq/*/; do
-  name=$(cat "${irq_dir}actions" 2>/dev/null)
-  case "$name" in
-    *wlan*|*wifi*|*mt76*|*connsys*|*WIFI*|*WCN*|\
-    *mtk_*net*|*rmnet*|*ccmni*|*modem*|*ccci*)
-      echo "$ADAPT_MASK" > "${irq_dir}smp_affinity" 2>/dev/null \
-        && REBOUND=$((REBOUND+1))
-      ;;
-  esac
-done
-log "[10] Adaptive IRQ: ${REBOUND} IRQs → 0x${ADAPT_MASK} (thermal=${THERMAL_HOT})"
-
-# =============================================================================
-# 11. QDISC — fq_codel per interface (bufferbloat control)
-# fq_codel: Fair Queue CoDel — real, kernel-implemented AQM
-# Reduces bufferbloat on mobile connections measurably
-# =============================================================================
-QDISC_APPLIED=0
-for IF in $(ip link show up 2>/dev/null \
-    | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
-    | grep -vE "^lo$|^dummy"); do
-  tc qdisc replace dev "$IF" root fq_codel \
-    limit 1024 target 5ms interval 100ms quantum 1514 2>/dev/null \
-  && QDISC_APPLIED=$((QDISC_APPLIED+1)) \
-  || tc qdisc replace dev "$IF" root fq 2>/dev/null
-done
-# Set default qdisc for interfaces that come up later (e.g. after SIM attach)
-sysctl -w net.core.default_qdisc=fq_codel 2>/dev/null \
-  || sysctl -w net.core.default_qdisc=fq 2>/dev/null
-DFLT_QDISC=$(sysctl -n net.core.default_qdisc 2>/dev/null)
-log "[11] qdisc: fq_codel on ${QDISC_APPLIED} ifaces | default=${DFLT_QDISC}"
-
-# =============================================================================
-# 12. TCP/IP KERNEL HARDENING — ECN, reordering, early retransmit
-# All sysctls here exist and work on Android 4.14–6.x kernels
-# =============================================================================
-# ECN — signals congestion without dropping packets (RFC 3168)
-sysctl -w net.ipv4.tcp_ecn=1                   2>/dev/null
-# DSACK — allows reporting duplicate segments precisely
-sysctl -w net.ipv4.tcp_dsack=1                 2>/dev/null
-# Tolerate more packet reordering before triggering fast retransmit
-sysctl -w net.ipv4.tcp_reordering=6            2>/dev/null
-# Early retransmit — retransmit without waiting for 3 DUPACKs (RFC 5827)
-# 3 = enabled for both small cwnd and tail loss probe
-sysctl -w net.ipv4.tcp_early_retrans=3         2>/dev/null
-# Faster stale route GC — avoids routing to dead gateways
-sysctl -w net.ipv4.route.gc_timeout=100        2>/dev/null
-# Reduce TIME_WAIT socket recycling limit — frees ports faster
-sysctl -w net.ipv4.tcp_max_tw_buckets=32768    2>/dev/null
-# TCP abort on overflow — drop connections instead of queuing when overloaded
-sysctl -w net.ipv4.tcp_abort_on_overflow=0     2>/dev/null
-ECN=$(sysctl -n net.ipv4.tcp_ecn 2>/dev/null)
-log "[12] TCP hardening applied (ECN=${ECN}, reordering=6, early_retrans=3)"
-
-# =============================================================================
-# 13. HOTSPOT & NAT — conntrack expansion (kernel sysctl, actually works)
-# =============================================================================
-# Expand conntrack table — more simultaneous NAT sessions (hotspot clients)
-sysctl -w net.netfilter.nf_conntrack_max=65536              2>/dev/null
-sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=300 2>/dev/null
-sysctl -w net.netfilter.nf_conntrack_udp_timeout=30         2>/dev/null
-sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=60  2>/dev/null
-# Larger hash table = O(1) lookups for NAT (reduce CPU during tethering)
-if [ -f /sys/module/nf_conntrack/parameters/hashsize ]; then
-  echo 16384 > /sys/module/nf_conntrack/parameters/hashsize 2>/dev/null
-fi
-# Enable tethering hardware offload
-setprop persist.tether.offload.disabled 0
-log "[13] NAT conntrack expanded + tethering offload enabled"
+# 5G toggle
+setprop persist.vendor.radio.nr.setting.support 1
+setprop persist.vendor.radio.show_nr_switch 1
+setprop persist.radio.nr.setting 1
+# VoLTE toggle
+setprop persist.vendor.radio.volte_setting_support 1
+setprop persist.vendor.radio.show_volte_setting 1
+setprop persist.dbg.volte_avail_ovr 1
+setprop persist.dbg.ims_volte_enable 1
+# WiFi Calling toggle
+setprop persist.vendor.radio.wfc_setting_support 1
+setprop persist.vendor.radio.show_wfc_setting 1
+setprop persist.dbg.wfc_avail_ovr 1
+# Video Calling toggle
+setprop persist.dbg.vt_avail_ovr 1
+setprop persist.vendor.radio.show_vilte_setting 1
+# Network mode selector (all options)
+setprop persist.vendor.radio.force_network_mode 1
+setprop persist.vendor.radio.show_network_mode 1
+# APN editor unlock
+setprop persist.vendor.radio.apn_unlock 1
+setprop persist.vendor.radio.show_apn_setting 1
+# Signal dBm in status
+setprop persist.radio.show_signal_dbm 1
+setprop persist.vendor.radio.show_signal_detail 1
+# MIUI/HyperOS specific
+setprop persist.sys.miui.volte_available 1
+setprop persist.sys.miui.wfc_available 1
+setprop persist.sys.miui.nr_available 1
+setprop persist.sys.miui.show_volte_icon 1
+setprop persist.sys.miui.show_nr_icon 1
+setprop persist.sys.miui.show_wfc_icon 1
+log "[10] Settings UI network features unlocked"
 
 # =============================================================================
 # DONE
 # =============================================================================
 log "-----------------------------------------------"
-log " All network tweaks applied successfully (v1.2)"
+log " All network tweaks applied successfully"
 log "==============================================="
+
+# =============================================================================
+# 11. CCCI + ANTENNA + CA SCHEDULER + CONNAC (runtime re-apply)
+# =============================================================================
+setprop persist.vendor.radio.ccci_ready 1
+setprop persist.vendor.radio.ccci_bypass_fsd 1
+setprop persist.vendor.radio.ant_switch 1
+setprop persist.vendor.radio.ant_diversity 1
+setprop persist.vendor.radio.lte_rx_diversity 1
+setprop persist.vendor.radio.nr_rx_diversity 1
+setprop persist.vendor.radio.lte_dl_4rx 1
+setprop persist.vendor.radio.nr_dl_4rx 1
+setprop persist.vendor.radio.lte_ca_max_component 4
+setprop persist.vendor.radio.nr_ca_max_component 2
+setprop persist.vendor.radio.nr_intra_band_ca 1
+setprop persist.vendor.radio.nr_inter_band_ca 1
+setprop persist.vendor.wifi.connac2 1
+setprop persist.vendor.mtk.wifi.ampdu_tx 1
+setprop persist.vendor.mtk.wifi.ampdu_rx 1
+setprop persist.vendor.mtk.wifi.amsdu_tx 1
+setprop persist.vendor.mtk.wifi.amsdu_rx 1
+setprop persist.vendor.mtk.wifi.tx_power_boost 1
+setprop persist.vendor.mtk.wifi.he_dl_ofdma 1
+setprop persist.vendor.mtk.wifi.he_ul_ofdma 1
+log "[11] CCCI + Antenna + CA + ConnAC props applied"
+
+# =============================================================================
+# 12. SIGNAL PROCESSING + NETWORK SEARCH + MODEM POWER
+# =============================================================================
+setprop persist.vendor.radio.afc.enable 1
+setprop persist.vendor.radio.ulfd.enable 1
+setprop persist.vendor.radio.lte_ul_mcs_boost 1
+setprop persist.vendor.radio.nr_ul_mcs_boost 1
+setprop persist.vendor.radio.lte_ul_rank 2
+setprop persist.vendor.radio.nr_ul_rank 2
+setprop persist.vendor.radio.fast_camp_enable 1
+setprop persist.vendor.radio.rat_priority nr,lte,wcdma,gsm
+setprop persist.vendor.radio.md_fast_wakeup 1
+setprop persist.vendor.radio.md_sleep_threshold -100
+setprop persist.vendor.radio.data_throttle 0
+setprop persist.vendor.radio.slice_support 1
+setprop persist.vendor.radio.ursp_enable 1
+setprop persist.vendor.radio.srvcc_enable 1
+log "[12] Signal + Network search + Modem power applied"
+
+# =============================================================================
+# 13. WiFi AP COMMUNICATION — 802.11 QoS/WMM/BA/ADDTS/Beamforming/802.11k/v/r
+# =============================================================================
+# WMM + UAPSD — priority AC queues toward AP
+setprop persist.vendor.mtk.wifi.wmm_ac_vo 1
+setprop persist.vendor.mtk.wifi.wmm_ac_vi 1
+setprop persist.vendor.mtk.wifi.uapsd_enable 1
+setprop persist.vendor.mtk.wifi.wmm_ps 1
+
+# Block ACK — aggregate up to 64 frames per BA window
+setprop persist.vendor.mtk.wifi.ba_tx_size 64
+setprop persist.vendor.mtk.wifi.ba_rx_size 64
+setprop persist.vendor.mtk.wifi.ba_auto 1
+
+# ADDTS — send QoS Traffic Stream request to AP
+setprop persist.vendor.mtk.wifi.addts_enable 1
+setprop persist.vendor.mtk.wifi.ts_reclassify 1
+
+# Beamforming feedback — device sends CSI report to let AP steer beam
+setprop persist.vendor.mtk.wifi.su_bfee 1
+setprop persist.vendor.mtk.wifi.mu_bfee 1
+setprop persist.vendor.mtk.wifi.vht_bf_cap 1
+setprop persist.vendor.mtk.wifi.he_bf_cap 1
+setprop persist.vendor.mtk.wifi.bf_report_size 4
+
+# 802.11k/v/r — Neighbor Report, BSS Transition, Fast Roaming
+setprop persist.vendor.mtk.wifi.dot11k 1
+setprop persist.vendor.mtk.wifi.dot11v 1
+setprop persist.vendor.mtk.wifi.dot11r 1
+setprop persist.vendor.mtk.wifi.rrm_enable 1
+setprop persist.vendor.mtk.wifi.bss_transition 1
+setprop persist.vendor.mtk.wifi.ft_over_ds 1
+
+# Spatial streams + MCS toward AP
+setprop persist.vendor.mtk.wifi.nss_tx 2
+setprop persist.vendor.mtk.wifi.nss_rx 2
+setprop persist.vendor.mtk.wifi.max_ampdu_len 64
+setprop persist.vendor.mtk.wifi.rate_control 1
+setprop persist.vendor.mtk.wifi.ra_interval 100
+log "[13] WiFi AP QoS/WMM/BA/ADDTS/BF/802.11k-v-r applied"
+
+# =============================================================================
+# 14. TC QDISC — Remove Android default qdiscs, replace with fq
+#     fq (Fair Queue) pairs with BBR perfectly — per-flow pacing,
+#     eliminates head-of-line blocking, no artificial rate limit
+# =============================================================================
+for IF in $(ip link show up 2>/dev/null \
+    | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
+    | grep -vE "^lo$|^dummy|^ip6tnl|^sit"); do
+
+  # Remove Android's default qdisc (pfifo_fast / fq_codel / sfq)
+  # Skip interface if in AP/hotspot mode (prevents hotspot breakage)
+  AP_MODE=$(iw dev "$IF" info 2>/dev/null | grep -c "type AP")
+  [ "$AP_MODE" -gt "0" ] && continue
+
+  tc qdisc del dev "$IF" root 2>/dev/null
+
+  # Apply fq (Fair Queue) — best pairing for BBR congestion control
+  # flows get individual pacing queues, no single stream can starve others
+  tc qdisc add dev "$IF" root fq         2>/dev/null \
+    || tc qdisc add dev "$IF" root fq_codel 2>/dev/null \
+    || tc qdisc add dev "$IF" root pfifo_fast 2>/dev/null
+done
+
+# Verify
+APPLIED=$(tc qdisc show 2>/dev/null | grep -cE "fq |fq_codel")
+log "[14] tc qdisc → fq applied on ${APPLIED} interfaces"
+
+# =============================================================================
+# 15. HARDWARE OFFLOADING — GRO / GSO / TSO via sysfs + ethtool
+#     Offloads packet reassembly and segmentation to hardware
+#     instead of CPU — reduces kernel overhead for large transfers
+# =============================================================================
+for IF in $(ip link show up 2>/dev/null \
+    | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
+    | grep -vE "^lo$|^dummy|^ip6tnl|^sit"); do
+
+  # ethtool method (works on wlan0, eth0 if present)
+  ethtool -K "$IF" gro on  2>/dev/null
+  ethtool -K "$IF" gso on  2>/dev/null
+  ethtool -K "$IF" tso on  2>/dev/null
+  ethtool -K "$IF" rx  on  2>/dev/null
+  ethtool -K "$IF" tx  on  2>/dev/null
+
+  # sysfs method — GRO via napi (rmnet_data* / ccmni*)
+  for Q in /sys/class/net/${IF}/queues/rx-*/; do
+    [ -f "${Q}rps_flow_cnt" ] && echo 512 > "${Q}rps_flow_cnt" 2>/dev/null
+  done
+done
+
+# GRO via sysctl (kernel-level)
+sysctl -w net.core.gro_normal_batch=64 2>/dev/null
+
+log "[15] HW offloading (GRO/GSO/TSO) applied"
+
+# =============================================================================
+# 16. XPS — Transmit Packet Steering
+#     Map each TX queue to the same big-core CPU mask as RX (IRQ affinity)
+#     Ensures TX processing happens on the same core as RX → cache-hot path
+# =============================================================================
+XPS_BOUND=0
+for IF in $(ls /sys/class/net/ 2>/dev/null \
+    | grep -vE "^lo$|^dummy|^ip6tnl|^sit"); do
+  for TXQ in /sys/class/net/${IF}/queues/tx-*/; do
+    [ -f "${TXQ}xps_cpus" ] || continue
+    echo "$BIG_MASK" > "${TXQ}xps_cpus" 2>/dev/null \
+      && XPS_BOUND=$((XPS_BOUND+1))
+  done
+done
+log "[16] XPS → cpu mask 0x${BIG_MASK} on ${XPS_BOUND} TX queues"
+
+# =============================================================================
+# 17. NAPI / NETDEV BUDGET — Process more packets per interrupt cycle
+#     Default Android budget=300, increasing to 600 means fewer context
+#     switches per second at high throughput — especially for NR/5G
+# =============================================================================
+sysctl -w net.core.netdev_budget=600          2>/dev/null
+sysctl -w net.core.netdev_budget_usecs=4000   2>/dev/null
+sysctl -w net.core.netdev_max_backlog=32768   2>/dev/null
+log "[17] NAPI budget=600, backlog=32768 applied"
+
+# =============================================================================
+# 18. SCHEDUTIL HINT — Big cores respond faster to network load bursts
+#     Does NOT lock governor to performance.
+#     Lowers up_rate_limit on big cores so schedutil reacts in <200µs
+#     instead of the default 500µs — critical for sub-millisecond IRQ handling
+# =============================================================================
+SCHED_APPLIED=0
+for cpu_dir in /sys/devices/system/cpu/cpu*/cpufreq/; do
+  [ -f "${cpu_dir}scaling_governor" ] || continue
+  GOV=$(cat "${cpu_dir}scaling_governor" 2>/dev/null)
+  [ "$GOV" != "schedutil" ] && continue
+  # Only tune big cores (cpu index >= half of total)
+  CPU_NUM=$(echo "$cpu_dir" | grep -o 'cpu[0-9]*' | grep -o '[0-9]*')
+  HALF=$((CPUS / 2))
+  [ "$CPU_NUM" -ge "$HALF" ] || continue
+  # Lower rate_limit from default 500µs → 0 (react immediately to load spikes)
+  echo 0   > "${cpu_dir}schedutil/up_rate_limit_us"   2>/dev/null
+  echo 500 > "${cpu_dir}schedutil/down_rate_limit_us" 2>/dev/null
+  SCHED_APPLIED=$((SCHED_APPLIED+1))
+done
+log "[18] schedutil up_rate_limit=0 on ${SCHED_APPLIED} big cores"
+
+# =============================================================================
+# 19. RPS FLOW TABLE — Larger flow hash table for multi-core RX steering
+#     Default 0 flows — setting 512 per queue distributes high-bandwidth
+#     connections across all RPS-enabled CPUs more evenly
+# =============================================================================
+sysctl -w net.core.rps_sock_flow_entries=32768 2>/dev/null
+for IF in $(ls /sys/class/net/ 2>/dev/null \
+    | grep -vE "^lo$|^dummy"); do
+  for RXQ in /sys/class/net/${IF}/queues/rx-*/; do
+    [ -f "${RXQ}rps_flow_cnt" ] && echo 512 > "${RXQ}rps_flow_cnt" 2>/dev/null
+    [ -f "${RXQ}rps_cpus"     ] && echo "$BIG_MASK" > "${RXQ}rps_cpus" 2>/dev/null
+  done
+done
+log "[19] RPS flow table=32768, rps_flow_cnt=512 applied"
+
+# =============================================================================
+# 20. IRQ COALESCING (Interrupt Moderation)
+#     Batch incoming packets for 50µs before raising IRQ — fewer interrupts,
+#     larger batches per wakeup → significant throughput gain for bulk transfers
+# =============================================================================
+COAL_APPLIED=0
+for IF in $(ip link show up 2>/dev/null \
+    | awk -F': ' '/^[0-9]+/{gsub(/@.*/,"",$2); print $2}' \
+    | grep -vE "^lo$|^dummy|^ip6tnl|^sit"); do
+  ethtool -C "$IF" \
+    rx-usecs 50 tx-usecs 50 \
+    rx-frames 32 tx-frames 32 2>/dev/null \
+    && COAL_APPLIED=$((COAL_APPLIED+1))
+done
+log "[20] IRQ coalescing rx-usecs=50 rx-frames=32 on ${COAL_APPLIED} interfaces"
+
+# =============================================================================
+# 21. TCP OVERHEAD STRIPPING
+#     tcp_timestamps=0  → removes 10-12 byte timestamp option from every segment
+#     tcp_mtu_probing=2 → always start with full MTU, PMTUD handles reduction
+#     Combined: less per-packet CPU work, more payload per segment
+# =============================================================================
+sysctl -w net.ipv4.tcp_timestamps=0     2>/dev/null
+sysctl -w net.ipv4.tcp_mtu_probing=2    2>/dev/null
+# Also enable ECN for congestion signaling without dropping packets
+sysctl -w net.ipv4.tcp_ecn=1           2>/dev/null
+sysctl -w net.ipv4.tcp_ecn_fallback=1  2>/dev/null
+log "[21] TCP overhead stripped (timestamps=0, mtu_probing=2, ECN=1)"
+
+# =============================================================================
+# 22. CONNTRACK SCALING
+#     Default Android nf_conntrack_max is ~65536 — exhausted quickly under
+#     multi-threaded download (IDM/Torrent), gaming + background apps combined
+#     Scale to 2M entries; hashsize = max/8 for optimal lookup performance
+# =============================================================================
+CT_MAX=2000000
+CT_HASH=$((CT_MAX / 8))   # 250000 buckets
+
+sysctl -w net.netfilter.nf_conntrack_max=$CT_MAX                2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_buckets=$CT_HASH           2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_tcp_timeout_established=600 2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_tcp_timeout_time_wait=30    2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_tcp_timeout_close_wait=15   2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_udp_timeout=30              2>/dev/null
+sysctl -w net.netfilter.nf_conntrack_udp_timeout_stream=120      2>/dev/null
+# Prevent conntrack table from filling — drop oldest TIME_WAIT first
+sysctl -w net.netfilter.nf_conntrack_tcp_loose=1                 2>/dev/null
+ACTUAL=$(sysctl -n net.netfilter.nf_conntrack_max 2>/dev/null)
+log "[22] Conntrack max=${ACTUAL}, hash=${CT_HASH}, TCP_EST=600s"
