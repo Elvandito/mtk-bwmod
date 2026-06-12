@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>MTK BWMOD - Extreme Bandwidth Mod</title>
     <meta name="description"
         content="Universal Magisk module for all MediaTek devices. Pure network optimization for WiFi, LTE, NR/5G, TCP, VoLTE, data connectivity.">
@@ -168,7 +168,10 @@
             padding: 0;
         }
 
-        html {
+        html, body {
+            overflow-x: hidden; /* Strictly prevent horizontal scrolling */
+            width: 100%;
+            max-width: 100vw;
             scroll-behavior: smooth;
         }
 
@@ -176,7 +179,7 @@
             font-family: var(--font-mono);
             background-color: var(--theme-bg);
             color: var(--theme-text);
-            line-height: 32px;
+            line-height: 1.6;
             font-size: 16px;
             font-weight: 400;
             -webkit-font-smoothing: antialiased;
@@ -188,24 +191,26 @@
         h1, h2, h3, h4, h5, h6 {
             font-weight: 700;
             color: var(--theme-text);
+            word-wrap: break-word;
         }
 
+        /* Fluid Typography - Scales smoothly based on screen width */
         h1 {
-            font-size: 38px;
-            line-height: 57px;
+            font-size: clamp(28px, 5vw + 10px, 38px);
+            line-height: 1.2;
             margin-bottom: 24px;
         }
 
         h2 {
-            font-size: 28px;
-            line-height: 40px;
+            font-size: clamp(22px, 4vw + 8px, 28px);
+            line-height: 1.3;
             margin-bottom: 20px;
             margin-top: 48px;
         }
 
         h3 {
             font-size: 16px;
-            line-height: 24px;
+            line-height: 1.5;
             margin-bottom: 16px;
             margin-top: 32px;
         }
@@ -233,6 +238,7 @@
 
         /* Layout */
         .container {
+            width: 100%;
             max-width: 1200px;
             margin: 0 auto;
             padding: 0 40px;
@@ -276,6 +282,7 @@
             color: var(--theme-text);
             letter-spacing: 1px;
             transition: color 0.4s ease;
+            white-space: nowrap;
         }
 
         .nav-links {
@@ -294,6 +301,7 @@
             transition: color 0.2s ease, background-color 0.2s ease;
             cursor: pointer;
             position: relative;
+            white-space: nowrap;
         }
 
         .nav-link:hover {
@@ -321,6 +329,7 @@
                 box-shadow 0.2s ease,
                 transform 0.15s cubic-bezier(0.22, 1, 0.36, 1),
                 border-color 0.2s ease;
+            text-align: center;
         }
 
         .btn:active {
@@ -394,6 +403,7 @@
             background-color: var(--badge-bg);
             color: var(--badge-text);
             animation: float 4s ease-in-out infinite;
+            white-space: nowrap;
         }
 
         .badge:nth-child(even) {
@@ -423,6 +433,7 @@
                 transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
                 border-color 0.3s ease,
                 background-color 0.4s ease;
+            width: 100%;
         }
 
         .card:hover {
@@ -449,14 +460,16 @@
             border-radius: 6px;
             padding: 24px;
             font-family: var(--font-mono);
-            font-size: 16px;
-            line-height: 24px;
+            font-size: 14px; /* Slightly smaller for better fit */
+            line-height: 1.5;
             overflow-x: auto;
             margin-bottom: 24px;
+            -webkit-overflow-scrolling: touch;
         }
 
         .code-container pre {
             margin: 0;
+            white-space: pre;
         }
 
         .code-prompt { color: var(--color-green); margin-right: 8px; }
@@ -472,6 +485,7 @@
             border-radius: 4px;
             margin-bottom: 24px;
             color: var(--theme-text);
+            word-wrap: break-word;
         }
 
         .alert-success { border-left-color: var(--color-green); }
@@ -512,6 +526,7 @@
             display: flex;
             gap: 16px;
             margin-top: 32px;
+            flex-wrap: wrap; /* Safety for overflowing buttons */
         }
 
         /* Footer */
@@ -526,6 +541,8 @@
             justify-content: space-between;
             align-items: center;
             color: var(--theme-text-secondary);
+            flex-wrap: wrap;
+            gap: 16px;
         }
 
         /* Skeleton loading for release card */
@@ -566,9 +583,9 @@
         /* Responsive Tablet */
         @media (max-width: 999px) {
             .col-4 { grid-column: span 6; }
-            .container { padding: 0 20px; }
-            .navbar { padding: 16px 20px; }
-            .navbar.scrolled { padding: 10px 20px; }
+            .container { padding: 0 24px; }
+            .navbar { padding: 16px 24px; }
+            .navbar.scrolled { padding: 10px 24px; }
             .section { padding: 64px 0; }
         }
 
@@ -576,8 +593,9 @@
         @media (max-width: 599px) {
             .col-4, .col-6 { grid-column: span 12; }
             .container { padding: 0 16px; }
+            .grid { gap: 20px; } /* Reduce gap on mobile */
             
-            /* Navbar Fix: Stack Logo on top, swipeable row of links below */
+            /* Navbar Fix */
             .navbar { 
                 flex-direction: column; 
                 align-items: flex-start; 
@@ -589,41 +607,48 @@
             .nav-links { 
                 flex-direction: row; 
                 width: 100%; 
-                overflow-x: auto; /* Enables horizontal scrolling */
-                white-space: nowrap; /* Prevents text from wrapping */
-                padding-bottom: 4px;
-                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-                scrollbar-width: none; /* Hides scrollbar in Firefox */
-            }
-            
-            /* Hides scrollbar in Chrome/Safari/Edge for a cleaner look */
-            .nav-links::-webkit-scrollbar { 
-                display: none; 
-            }
-            
-            /* Typography Tweaks for small screens */
-            h1 { 
-                font-size: 32px; 
-                line-height: 42px; 
-                margin-bottom: 16px; 
-            }
-            h2 { 
-                font-size: 24px; 
-                line-height: 32px; 
-                margin-top: 32px; 
-            }
-            
-            .hero { 
-                padding: 48px 0 32px; 
-            }
-            .hero-actions { flex-direction: column; }
-            .btn { width: 100%; }
-
-            /* Table overflow fix so tables don't break the layout width */
-            table {
-                display: block;
                 overflow-x: auto;
                 white-space: nowrap;
+                padding-bottom: 4px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+            .nav-links::-webkit-scrollbar { display: none; }
+            
+            /* Section and Hero Padding */
+            .hero { padding: 40px 0 32px; }
+            .section { padding: 48px 0; }
+            .section-tight { padding: 32px 0; }
+            
+            .hero-actions { flex-direction: column; width: 100%; }
+            .btn { width: 100%; justify-content: center; }
+
+            /* Give cards less padding to maximize inner space on narrow screens */
+            .card { padding: 16px; }
+            .code-container { padding: 16px; }
+
+            /* Table overflow fix */
+            .table-wrapper {
+                width: 100%;
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+                margin-bottom: 24px;
+                border: 1px solid var(--theme-border);
+                border-radius: 6px;
+            }
+            
+            table {
+                margin-bottom: 0; /* Remove margin inside wrapper */
+                white-space: nowrap;
+                border: none; /* Let wrapper handle outer border */
+            }
+            
+            th, td {
+                border-top: none;
+                border-bottom: 1px solid var(--theme-border);
+            }
+            tr:last-child td {
+                border-bottom: none;
             }
         }
 
@@ -685,7 +710,7 @@
 
         <!-- Documentation: Features Section -->
         <section id="features" class="section">
-            <h1 style="font-size: 28px;" class="reveal">Features Overview</h1>
+            <h1 class="reveal">Features Overview</h1>
             <p class="reveal">Comprehensive system modification targeting `system.prop` (~270 props across 14 sections)
                 and
                 `service.sh` (running every boot).</p>
@@ -715,85 +740,89 @@
             </div>
 
             <h2 class="reveal">system.prop Sections</h2>
-            <table class="reveal">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Section</th>
-                        <th>What it does</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>01</td>
-                        <td>LTE Carrier Aggregation</td>
-                        <td>Forces CA on uplink + downlink, increases LTE.lteca cap</td>
-                    </tr>
-                    <tr>
-                        <td>04</td>
-                        <td>WiFi Power Save Off</td>
-                        <td>Disables WiFi power limits, 2.4+5GHz aggregation, WiFi 6/6E</td>
-                    </tr>
-                    <tr>
-                        <td>07</td>
-                        <td>DNS Cloudflare</td>
-                        <td>Forces 1.1.1.1 on rmnet0, rmnet1, and base</td>
-                    </tr>
-                    <tr>
-                        <td>09</td>
-                        <td>NR/5G Force</td>
-                        <td>SA + NSA, all global bands, default network mode 26</td>
-                    </tr>
-                    <tr>
-                        <td>13</td>
-                        <td>Connectivity & Stall</td>
-                        <td>Data stall detection, PDCP/RLC aggregation, RRC timers</td>
-                    </tr>
-                    <tr>
-                        <td>15</td>
-                        <td>Settings UI Unlock</td>
-                        <td>Shows 5G/VoLTE/WFC toggles, full network mode selector</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper reveal">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Section</th>
+                            <th>What it does</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>01</td>
+                            <td>LTE Carrier Aggregation</td>
+                            <td>Forces CA on uplink + downlink, increases LTE.lteca cap</td>
+                        </tr>
+                        <tr>
+                            <td>04</td>
+                            <td>WiFi Power Save Off</td>
+                            <td>Disables WiFi power limits, 2.4+5GHz aggregation, WiFi 6/6E</td>
+                        </tr>
+                        <tr>
+                            <td>07</td>
+                            <td>DNS Cloudflare</td>
+                            <td>Forces 1.1.1.1 on rmnet0, rmnet1, and base</td>
+                        </tr>
+                        <tr>
+                            <td>09</td>
+                            <td>NR/5G Force</td>
+                            <td>SA + NSA, all global bands, default network mode 26</td>
+                        </tr>
+                        <tr>
+                            <td>13</td>
+                            <td>Connectivity & Stall</td>
+                            <td>Data stall detection, PDCP/RLC aggregation, RRC timers</td>
+                        </tr>
+                        <tr>
+                            <td>15</td>
+                            <td>Settings UI Unlock</td>
+                            <td>Shows 5G/VoLTE/WFC toggles, full network mode selector</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
             <h2 class="reveal">service.sh Boot Service</h2>
-            <table class="reveal">
-                <thead>
-                    <tr>
-                        <th>#</th>
-                        <th>Section</th>
-                        <th>What it does</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td>Radio props</td>
-                        <td>Re-applies NR/CA/MIMO/EN-DC after modem init</td>
-                    </tr>
-                    <tr>
-                        <td>3</td>
-                        <td>TCP/BBR</td>
-                        <td>BBR congestion control, 32MB buffers, fastopen, keepalive</td>
-                    </tr>
-                    <tr>
-                        <td>7</td>
-                        <td>Network IRQ affinity</td>
-                        <td>Binds wlan/modem IRQs to big CPU cores</td>
-                    </tr>
-                    <tr>
-                        <td>9</td>
-                        <td>txqueuelen + RPS</td>
-                        <td>Sets txqueuelen=3000 on all interfaces, RPS on rmnet</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper reveal">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Section</th>
+                            <th>What it does</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Radio props</td>
+                            <td>Re-applies NR/CA/MIMO/EN-DC after modem init</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>TCP/BBR</td>
+                            <td>BBR congestion control, 32MB buffers, fastopen, keepalive</td>
+                        </tr>
+                        <tr>
+                            <td>7</td>
+                            <td>Network IRQ affinity</td>
+                            <td>Binds wlan/modem IRQs to big CPU cores</td>
+                        </tr>
+                        <tr>
+                            <td>9</td>
+                            <td>txqueuelen + RPS</td>
+                            <td>Sets txqueuelen=3000 on all interfaces, RPS on rmnet</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </section>
 
         <!-- Documentation: Requirements & Device Support -->
         <section id="documentation" class="section-tight">
-            <h1 style="font-size: 28px;" class="reveal">Device Support & Requirements</h1>
+            <h1 class="reveal">Device Support & Requirements</h1>
 
             <p class="reveal">
                 The module is automatically detected at install and <strong>aborts on non-MTK hardware.</strong>
@@ -801,36 +830,38 @@
                 one match proceeds installation.
             </p>
 
-            <table class="reveal">
-                <thead>
-                    <tr>
-                        <th>Requirement</th>
-                        <th>Specification</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>SoC</strong></td>
-                        <td>Any MediaTek (Helio, Dimensity, MT-series)</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Root</strong></td>
-                        <td>Magisk v24+ or KernelSU</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Android</strong></td>
-                        <td>10 and above</td>
-                    </tr>
-                    <tr>
-                        <td><strong>ROM</strong></td>
-                        <td>Any — AOSP, MIUI, HyperOS, ColorOS, custom</td>
-                    </tr>
-                </tbody>
-            </table>
+            <div class="table-wrapper reveal">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Requirement</th>
+                            <th>Specification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>SoC</strong></td>
+                            <td>Any MediaTek (Helio, Dimensity, MT-series)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Root</strong></td>
+                            <td>Magisk v24+ or KernelSU</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Android</strong></td>
+                            <td>10 and above</td>
+                        </tr>
+                        <tr>
+                            <td><strong>ROM</strong></td>
+                            <td>Any — AOSP, MIUI, HyperOS, ColorOS, custom</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
 
-            <h2 style="margin-top: 48px;" class="reveal">File Structure</h2>
+            <h2 class="reveal">File Structure</h2>
             <div class="code-container reveal">
-                <pre><code>mtk_bwmod/
+<pre><code>mtk_bwmod/
 ├── META-INF/
 │   └── com/google/android/
 │       ├── update-binary
@@ -845,10 +876,10 @@
 
         <!-- Latest Release Section -->
         <section id="changelog" class="section-tight">
-            <h1 style="font-size: 28px;" class="reveal">Latest Release</h1>
+            <h1 class="reveal">Latest Release</h1>
             <div id="release-container" class="card reveal">
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <div class="skeleton" style="height: 24px; width: 200px;"></div>
+                    <div class="skeleton" style="height: 24px; width: 200px; max-width: 100%;"></div>
                     <div class="skeleton" style="height: 16px; width: 100%;"></div>
                     <div class="skeleton" style="height: 16px; width: 85%;"></div>
                     <div class="skeleton" style="height: 16px; width: 70%;"></div>
@@ -858,7 +889,7 @@
 
         <!-- Installation Section -->
         <section id="installation" class="section">
-            <h1 style="font-size: 28px;" class="reveal">Deployment Guide</h1>
+            <h1 class="reveal">Deployment Guide</h1>
             <p class="reveal">Flash the module via your preferred root manager app (Magisk, KernelSU, APatch, etc.).</p>
 
             <div class="card reveal" style="margin-top: 16px;">
@@ -878,7 +909,7 @@
     <footer class="container footer">
         <div class="footer-content">
             <div class="nav-logo" style="font-size: 16px;">MTK_BWMOD</div>
-            <div>&copy; 2026 MTK Bandwidth Mod. MIT License.</div>
+            <div style="text-align: right;">&copy; 2026 MTK Bandwidth Mod.<br>MIT License.</div>
         </div>
     </footer>
 
@@ -899,10 +930,13 @@
 
                 releaseContainer.innerHTML = `
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 16px;">
-                        <h3 style="margin: 0; font-size: 20px;">${data.name} <span class="badge badge-success" style="margin-left: 8px;">${data.tag_name}</span></h3>
+                        <h3 style="margin: 0; font-size: clamp(18px, 4vw, 20px); word-break: break-word;">
+                            ${data.name} 
+                            <span class="badge badge-success" style="margin-left: 8px; vertical-align: middle;">${data.tag_name}</span>
+                        </h3>
                         <span class="code-comment">${date}</span>
                     </div>
-                    <div style="color: var(--theme-text-secondary); margin-bottom: 24px; line-height: 1.6;">
+                    <div style="color: var(--theme-text-secondary); margin-bottom: 24px; line-height: 1.6; word-wrap: break-word; overflow-x: auto;">
                         ${formattedBody}
                     </div>
                     <a href="${data.html_url}" target="_blank" class="btn btn-secondary">Download / View on GitHub</a>
@@ -941,6 +975,7 @@
         document.querySelectorAll('.reveal-stagger > *').forEach((el, i) => {
             revealObserver.observe(el);
         });
+
         // =====================
         // Smooth Scrolling
         // =====================
