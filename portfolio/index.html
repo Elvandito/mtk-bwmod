@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MTK BWMOD - Extreme Bandwidth Mod</title>
+    <meta name="description"
+        content="Universal Magisk module for all MediaTek devices. Pure network optimization for WiFi, LTE, NR/5G, TCP, VoLTE, data connectivity.">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+</head>
+
+<body>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-logo">MTK_BWMOD</div>
+        <div class="nav-links">
+            <a href="#features" class="nav-link">Features</a>
+            <a href="#documentation" class="nav-link">Documentation</a>
+            <a href="#installation" class="nav-link">Installation</a>
+            <a href="https://github.com/Elvandito/mtk-bwmod" target="_blank" class="nav-link">GitHub</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container">
+
+        <!-- Hero Section -->
+        <section class="hero">
+            <div class="badge-group">
+                <span class="badge badge-success">Universal</span>
+                <span class="badge">KernelSU</span>
+                <span class="badge">Magisk</span>
+                <span class="badge">MediaTek</span>
+            </div>
+
+            <h1>MTK Extreme Bandwidth Mod.</h1>
+
+            <p>
+                Universal Magisk module for all MediaTek devices (Helio G / P / X, Dimensity, MT6xxx, MT8xxx).
+                Pure network optimization—WiFi, LTE, NR/5G, TCP, VoLTE, and data connectivity.
+                No GPU/audio/memory tweaks. Network only.
+            </p>
+
+            <div class="hero-actions">
+                <a href="#installation" class="btn btn-primary">Install Module</a>
+                <a href="#documentation" class="btn btn-secondary">Read Docs</a>
+            </div>
+        </section>
+
+        <div class="alert alert-warning">
+            <strong>Disclaimer:</strong> These props and sysctl tweaks target MTK-specific modem/radio/WiFi firmware
+            interfaces. Results vary by carrier, ROM, and chipset generation. Safe to remove by disabling/deleting the
+            module.
+        </div>
+
+        <!-- Documentation: Features Section -->
+        <section id="features" class="section">
+            <h1 style="font-size: 28px;" class="reveal">Features Overview</h1>
+            <p class="reveal">Comprehensive system modification targeting `system.prop` (~270 props across 14 sections)
+                and
+                `service.sh` (running every boot).</p>
+
+            <h2 class="reveal">system.prop Highlights</h2>
+            <div class="grid reveal-stagger" style="margin-bottom: 48px;">
+                <div class="col-4 card">
+                    <h3>LTE & 5G NR</h3>
+                    <p class="code-comment" style="margin-bottom: 0;">
+                        Forces Carrier Aggregation (CA) on uplink + downlink. Enables SA + NSA for all global bands.
+                    </p>
+                </div>
+
+                <div class="col-4 card">
+                    <h3>TCP & WiFi</h3>
+                    <p class="code-comment" style="margin-bottom: 0;">
+                        Buffers up to 64MB for NR. Disables all WiFi power limits, enables 2.4+5GHz aggregation.
+                    </p>
+                </div>
+
+                <div class="col-4 card">
+                    <h3>VoLTE / VoNR</h3>
+                    <p class="code-comment" style="margin-bottom: 0;">
+                        Unlocks HD Voice + 5G calling, WFC, and forces network features in Settings UI for all ROMs.
+                    </p>
+                </div>
+            </div>
+
+            <h2 class="reveal">system.prop Sections</h2>
+            <table class="reveal">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Section</th>
+                        <th>What it does</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>01</td>
+                        <td>LTE Carrier Aggregation</td>
+                        <td>Forces CA on uplink + downlink, increases LTE.lteca cap</td>
+                    </tr>
+                    <tr>
+                        <td>04</td>
+                        <td>WiFi Power Save Off</td>
+                        <td>Disables WiFi power limits, 2.4+5GHz aggregation, WiFi 6/6E</td>
+                    </tr>
+                    <tr>
+                        <td>07</td>
+                        <td>DNS Cloudflare</td>
+                        <td>Forces 1.1.1.1 on rmnet0, rmnet1, and base</td>
+                    </tr>
+                    <tr>
+                        <td>09</td>
+                        <td>NR/5G Force</td>
+                        <td>SA + NSA, all global bands, default network mode 26</td>
+                    </tr>
+                    <tr>
+                        <td>13</td>
+                        <td>Connectivity & Stall</td>
+                        <td>Data stall detection, PDCP/RLC aggregation, RRC timers</td>
+                    </tr>
+                    <tr>
+                        <td>15</td>
+                        <td>Settings UI Unlock</td>
+                        <td>Shows 5G/VoLTE/WFC toggles, full network mode selector</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 class="reveal">service.sh Boot Service</h2>
+            <table class="reveal">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Section</th>
+                        <th>What it does</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1</td>
+                        <td>Radio props</td>
+                        <td>Re-applies NR/CA/MIMO/EN-DC after modem init</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>TCP/BBR</td>
+                        <td>BBR congestion control, 32MB buffers, fastopen, keepalive</td>
+                    </tr>
+                    <tr>
+                        <td>7</td>
+                        <td>Network IRQ affinity</td>
+                        <td>Binds wlan/modem IRQs to big CPU cores</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>txqueuelen + RPS</td>
+                        <td>Sets txqueuelen=3000 on all interfaces, RPS on rmnet</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Documentation: Requirements & Device Support -->
+        <section id="documentation" class="section-tight">
+            <h1 style="font-size: 28px;" class="reveal">Device Support & Requirements</h1>
+
+            <p class="reveal">
+                The module is automatically detected at install and <strong>aborts on non-MTK hardware.</strong>
+                It uses a 9-method detection routine (checking `ro.board.platform`, `/proc/mtk_battery_cmd`, etc.). Any
+                one match proceeds installation.
+            </p>
+
+            <table class="reveal">
+                <thead>
+                    <tr>
+                        <th>Requirement</th>
+                        <th>Specification</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SoC</strong></td>
+                        <td>Any MediaTek (Helio, Dimensity, MT-series)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Root</strong></td>
+                        <td>Magisk v24+ or KernelSU</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Android</strong></td>
+                        <td>10 and above</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ROM</strong></td>
+                        <td>Any — AOSP, MIUI, HyperOS, ColorOS, custom</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h2 style="margin-top: 48px;" class="reveal">File Structure</h2>
+            <div class="code-container reveal">
+                <pre><code>mtk_bwmod/
+├── META-INF/
+│   └── com/google/android/
+│       ├── update-binary
+│       └── updater-script
+├── module.prop
+├── system.prop       <span class="code-comment">← 14 sections, ~270 props</span>
+├── customize.sh      <span class="code-comment">← 9-method MTK detection + install</span>
+├── service.sh        <span class="code-comment">← 9-section runtime boot service</span>
+└── README.md</code></pre>
+            </div>
+        </section>
+
+        <!-- Latest Release Section -->
+        <section id="changelog" class="section-tight">
+            <h1 style="font-size: 28px;" class="reveal">Latest Release</h1>
+            <div id="release-container" class="card reveal">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <div class="skeleton" style="height: 24px; width: 200px;"></div>
+                    <div class="skeleton" style="height: 16px; width: 100%;"></div>
+                    <div class="skeleton" style="height: 16px; width: 85%;"></div>
+                    <div class="skeleton" style="height: 16px; width: 70%;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Installation Section -->
+        <section id="installation" class="section">
+            <h1 style="font-size: 28px;" class="reveal">Deployment Guide</h1>
+            <p class="reveal">Flash the module via your preferred root manager app (Magisk, KernelSU, APatch, etc.).</p>
+
+            <div class="card reveal" style="margin-top: 16px;">
+                <ol style="margin-bottom: 0;">
+                    <li>Download the latest release zip from GitHub.</li>
+                    <li>Open your preferred root manager app.</li>
+                    <li>Navigate to the Modules section.</li>
+                    <li>Select <strong>Install from storage</strong> and choose the downloaded zip.</li>
+                    <li>Reboot your device once the installation is complete.</li>
+                </ol>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="container footer">
+        <div class="footer-content">
+            <div class="nav-logo" style="font-size: 16px;">MTK_BWMOD</div>
+            <div>&copy; 2026 MTK Bandwidth Mod. MIT License.</div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Fetch Latest Release Changelog
+        async function fetchLatestRelease() {
+            const releaseContainer = document.getElementById('release-container');
+            try {
+                const response = await fetch('https://api.github.com/repos/Elvandito/mtk-bwmod/releases/latest');
+                if (!response.ok) throw new Error('Network response was not ok');
+                const data = await response.json();
+
+                const date = new Date(data.published_at).toLocaleDateString();
+
+                // Parse markdown using marked.js
+                let formattedBody = marked.parse(data.body);
+
+                releaseContainer.innerHTML = `
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 16px;">
+                        <h3 style="margin: 0; font-size: 20px;">${data.name} <span class="badge badge-success" style="margin-left: 8px;">${data.tag_name}</span></h3>
+                        <span class="code-comment">${date}</span>
+                    </div>
+                    <div style="color: var(--theme-text-secondary); margin-bottom: 24px; line-height: 1.6;">
+                        ${formattedBody}
+                    </div>
+                    <a href="${data.html_url}" target="_blank" class="btn btn-secondary">Download / View on GitHub</a>
+                `;
+            } catch (error) {
+                console.error('Error fetching release:', error);
+                releaseContainer.innerHTML = `<p class="alert alert-error" style="margin: 0;">Failed to load latest release data from GitHub.</p>`;
+            }
+        }
+        fetchLatestRelease();
+
+        // =====================
+        // Navbar scroll effect
+        // =====================
+        const navbar = document.querySelector('.navbar');
+        window.addEventListener('scroll', () => {
+            navbar.classList.toggle('scrolled', window.scrollY > 20);
+        }, { passive: true });
+
+        // =====================
+        // Scroll-reveal (IntersectionObserver)
+        // =====================
+        const revealObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    revealObserver.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+        // Observe .reveal elements
+        document.querySelectorAll('.reveal').forEach(el => revealObserver.observe(el));
+
+        // Observe stagger children
+        document.querySelectorAll('.reveal-stagger > *').forEach((el, i) => {
+            revealObserver.observe(el);
+        });
+        // =====================
+        // Smooth Scrolling
+        // =====================
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // =====================
+        // Button Ripple Effect
+        // =====================
+        document.querySelectorAll('.btn').forEach(btn => {
+            btn.addEventListener('mousedown', function (e) {
+                let x = e.clientX - e.target.getBoundingClientRect().left;
+                let y = e.clientY - e.target.getBoundingClientRect().top;
+
+                let ripples = document.createElement('span');
+                ripples.style.left = x + 'px';
+                ripples.style.top = y + 'px';
+                ripples.style.position = 'absolute';
+                ripples.style.background = 'currentColor';
+                ripples.style.transform = 'translate(-50%, -50%)';
+                ripples.style.pointerEvents = 'none';
+                ripples.style.borderRadius = '50%';
+                ripples.style.animation = 'ripple 0.6s linear';
+                ripples.style.width = '10px';
+                ripples.style.height = '10px';
+                ripples.style.opacity = '0.3';
+                this.appendChild(ripples);
+
+                setTimeout(() => {
+                    ripples.remove();
+                }, 600);
+            });
+        });
+    </script>
+</body>
+
+</html>
